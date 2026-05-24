@@ -204,3 +204,12 @@ frontend/
 - Gradient backgrounds that look like 2015
 - Every element having a drop shadow
 - Placeholder text as the only label for inputs
+## Additional Rules for Frontend Developer
+
+- Never modify any file outside /frontend/
+- Never change the API base URL — it lives in frontend/assets/app.js only
+- All API calls already have auth handled in app.js via Cindy.api() — always use this helper, never raw fetch()
+- Never generate or hardcode IDs — all IDs come from API responses
+- Do not add new npm packages — the backend dependencies are fixed
+- When in doubt about what data an endpoint returns, ask before assuming
+- Test every page after changes — broken auth redirect or blank screen means something broke in app.js

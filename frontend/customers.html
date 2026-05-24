@@ -111,22 +111,28 @@
       });
 
       Cindy.withSubmit(document.querySelector('#customerForm'), async (data, form) => {
-        const body = Object.fromEntries(data);
-        const id = body.id;
-        const subscriptionBody = {
-          plan_id: body.plan_id,
-          start_date: body.start_date
+        const values = Object.fromEntries(data);
+        const id = values.id;
+        const customerBody = {
+          name: values.name,
+          phone: values.phone,
+          email: values.email
         };
-        delete body.id;
-        delete body.plan_id;
-        delete body.start_date;
+        const subscriptionBody = {
+          plan_id: values.plan_id,
+          start_date: values.start_date
+        };
         const payload = await Cindy.api(id ? `/customers/${encodeURIComponent(id)}` : '/customers', {
           method: id ? 'PUT' : 'POST',
-          body: JSON.stringify(body)
+          body: JSON.stringify(customerBody)
         });
-        const saved = payload?.customer || payload?.data || { ...body, id: id || Date.now() };
-        const customerId = saved.id || saved.customer_id || id;
-        if (subscriptionBody.plan_id) {
+        let saved = payload?.customer || payload?.data || { ...customerBody, id };
+        let customerId = saved.id || saved.customer_id || id;
+        if (!customerId && !id) {
+          customerId = await findCreatedCustomerId(customerBody.phone);
+          saved = { ...saved, id: customerId };
+        }
+        if (subscriptionBody.plan_id && customerId) {
           await saveSubscription(customerId, subscriptionBody);
         }
         if (id) {
@@ -291,6 +297,12 @@
         } else {
           subscriptions.unshift(saved);
         }
+      }
+
+      async function findCreatedCustomerId(phone) {
+        const payload = await Cindy.api('/customers');
+        customers = Cindy.normalizeList(payload, ['customers']);
+        return customers.find((customer) => String(customer.phone) === String(phone))?.id;
       }
 
       function enrichedCustomers() {
