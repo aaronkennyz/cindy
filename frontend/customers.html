@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cindy | Customers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <main class="main">
+        <section class="topbar">
+          <div>
+            <h1 class="page-title">Customers</h1>
+            <p class="page-subtitle">Search, filter, and manage customers without leaving the page.</p>
+          </div>
+          <button class="btn btn-primary" id="openCustomerDrawer" type="button"><i data-lucide="user-plus" class="icon"></i>Add customer</button>
+        </section>
+
+        <section class="card">
+          <div class="toolbar">
+            <div class="btn-row" style="flex: 1;">
+              <div class="field" style="min-width: min(100%, 280px); flex: 1;">
+                <label for="customerSearch">Search</label>
+                <input id="customerSearch" type="search" placeholder="Name or phone">
+              </div>
+              <div class="field" style="min-width: min(100%, 180px);">
+                <label for="statusFilter">Status</label>
+                <select id="statusFilter">
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="expiring">Expiring soon</option>
+                  <option value="expired">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" id="customersTable"></div>
+          <button class="btn btn-secondary load-more" id="loadMoreCustomers" type="button" hidden>Load more</button>
+        </section>
+      </main>
+    </div>
+
+    <div class="drawer-backdrop" id="customerBackdrop"></div>
+    <aside class="drawer" id="customerDrawer" aria-label="Add customer panel">
+      <div class="drawer-header">
+        <div>
+          <h2 class="card-title" id="customerDrawerTitle" style="margin: 0;">Add customer</h2>
+          <div class="muted">Create the record and update the table instantly.</div>
+        </div>
+        <button class="btn btn-ghost" type="button" data-close-drawer aria-label="Close"><i data-lucide="x" class="icon"></i></button>
+      </div>
+      <div class="drawer-body">
+        <form class="form" id="customerForm">
+          <input id="customerId" name="id" type="hidden">
+          <div class="field">
+            <label for="customerName">Name</label>
+            <input id="customerName" name="name" type="text" required>
+          </div>
+          <div class="field">
+            <label for="customerPhone">Phone</label>
+            <input id="customerPhone" name="phone" type="tel" required>
+          </div>
+          <div class="field">
+            <label for="customerEmail">Email</label>
+            <input id="customerEmail" name="email" type="email">
+          </div>
+          <div class="field">
+            <label for="customerPlan">Plan</label>
+            <select id="customerPlan" name="plan_id"></select>
+          </div>
+          <div class="field">
+            <label for="subscriptionStart">Subscription start date</label>
+            <input id="subscriptionStart" name="start_date" type="date">
+          </div>
+          <div class="form-message" aria-live="polite"></div>
+          <button class="btn btn-primary" type="submit">Save customer</button>
+        </form>
+      </div>
+    </aside>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script type="module">
+      import { Cindy } from './assets/app.js';
+
+      let customers = [];
+      let plans = [];
+      let subscriptions = [];
+      let visibleCount = 20;
+      const drawer = Cindy.bindDrawer('#openCustomerDrawer', '#customerDrawer', '#customerBackdrop');
+
+      if (!Cindy.redirectOnMissingAuth()) {
+        Cindy.layout('customers');
+        loadCustomers();
+      }
+
+      document.querySelector('#openCustomerDrawer').addEventListener('click', () => {
+        document.querySelector('#customerDrawerTitle').textContent = 'Add customer';
+        document.querySelector('#customerForm').reset();
+        document.querySelector('#customerId').value = '';
+      });
+
+      document.querySelector('#customerSearch').addEventListener('input', renderCustomers);
+      document.querySelector('#statusFilter').addEventListener('change', renderCustomers);
+      document.querySelector('#loadMoreCustomers').addEventListener('click', () => {
+        visibleCount += 20;
+        renderCustomers();
+      });
+
+      Cindy.withSubmit(document.querySelector('#customerForm'), async (data, form) => {
+        const body = Object.fromEntries(data);
+        const id = body.id;
+        const subscriptionBody = {
+          plan_id: body.plan_id,
+          start_date: body.start_date
+        };
+        delete body.id;
+        delete body.plan_id;
+        delete body.start_date;
+        const payload = await Cindy.api(id ? `/customers/${encodeURIComponent(id)}` : '/customers', {
+          method: id ? 'PUT' : 'POST',
+          body: JSON.stringify(body)
+        });
+        const saved = payload?.customer || payload?.data || { ...body, id: id || Date.now() };
+        const customerId = saved.id || saved.customer_id || id;
+        if (subscriptionBody.plan_id) {
+          await saveSubscription(customerId, subscriptionBody);
+        }
+        if (id) {
+          customers = customers.map((customer) => String(customer.id || customer.customer_id || customer.phone) === String(id) ? { ...customer, ...saved } : customer);
+          Cindy.toast('Customer updated.');
+        } else {
+          customers.unshift(saved);
+          Cindy.toast('Customer added.');
+        }
+        form.reset();
+        drawer.close();
+        renderCustomers();
+      });
+
+      async function loadCustomers() {
+        try {
+          const [customerPayload, planPayload, subscriptionsPayload] = await Promise.all([
+            Cindy.api('/customers'),
+            Cindy.api('/plans').catch(() => []),
+            Cindy.api('/subscriptions').catch(() => [])
+          ]);
+          customers = Cindy.normalizeList(customerPayload, ['customers']);
+          plans = Cindy.normalizeList(planPayload, ['plans']);
+          subscriptions = Cindy.normalizeList(subscriptionsPayload, ['subscriptions']);
+          renderPlanOptions();
+          renderCustomers();
+        } catch (error) {
+          document.querySelector('#customersTable').innerHTML = empty('wifi-off', 'Could not load customers. Check the API server and try again.');
+          Cindy.toast(error.message);
+        } finally {
+          Cindy.hydrateIcons();
+        }
+      }
+
+      function renderPlanOptions() {
+        const planOptions = plans.map((plan) => `<option value="${Cindy.escapeHtml(plan.id)}">${Cindy.escapeHtml(plan.name)} - ${Cindy.formatCurrency(plan.price)}</option>`).join('');
+        document.querySelector('#customerPlan').innerHTML = `<option value="">No plan selected</option>${planOptions}`;
+      }
+
+      function filteredCustomers() {
+        const term = document.querySelector('#customerSearch').value.trim().toLowerCase();
+        const status = document.querySelector('#statusFilter').value;
+        return enrichedCustomers().filter((customer) => {
+          const haystack = `${customer.name || ''} ${customer.phone || ''}`.toLowerCase();
+          const matchesTerm = !term || haystack.includes(term);
+          const customerStatus = Cindy.statusFor(customer);
+          const matchesStatus = status === 'all' || customerStatus === status;
+          return matchesTerm && matchesStatus;
+        });
+      }
+
+      function renderCustomers() {
+        const target = document.querySelector('#customersTable');
+        const list = filteredCustomers();
+        const page = list.slice(0, visibleCount);
+        document.querySelector('#loadMoreCustomers').hidden = list.length <= visibleCount;
+        if (!page.length) {
+          target.innerHTML = empty('user-round-search', 'No customers match this view.');
+          Cindy.hydrateIcons();
+          return;
+        }
+        target.innerHTML = `
+          <table class="table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Status</th><th>Expiry</th><th></th></tr></thead>
+            <tbody>
+              ${page.map((customer) => {
+                const id = customer.id || customer.customer_id || customer.phone;
+                return `
+                  <tr data-id="${Cindy.escapeHtml(id)}">
+                    <td>${Cindy.escapeHtml(customer.name)}</td>
+                    <td>${Cindy.escapeHtml(customer.phone)}</td>
+                    <td>${Cindy.escapeHtml(customer.plan_name || customer.plan || findPlanName(customer.plan_id))}</td>
+                    <td>${Cindy.badge(Cindy.statusFor(customer))}</td>
+                    <td>${Cindy.formatDate(customer.expiry_date || customer.expires_at || customer.end_date)}</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="btn btn-secondary" type="button" data-edit="${Cindy.escapeHtml(id)}"><i data-lucide="pencil" class="icon"></i>Edit</button>
+                        <button class="btn btn-ghost" type="button" data-delete="${Cindy.escapeHtml(id)}"><i data-lucide="trash-2" class="icon"></i>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+        bindRowActions();
+        Cindy.hydrateIcons();
+      }
+
+      function findPlanName(id) {
+        return plans.find((plan) => String(plan.id) === String(id))?.name || 'No plan';
+      }
+
+      function bindRowActions() {
+        document.querySelectorAll('[data-delete]').forEach((button) => {
+          button.addEventListener('click', () => confirmDelete(button.dataset.delete, button));
+        });
+        document.querySelectorAll('[data-edit]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const customer = enrichedCustomers().find((item) => String(item.id || item.customer_id || item.phone) === String(button.dataset.edit));
+            if (!customer) return;
+            document.querySelector('#customerDrawerTitle').textContent = 'Edit customer';
+            document.querySelector('#customerId').value = customer.id || customer.customer_id || customer.phone;
+            document.querySelector('#customerName').value = customer.name || '';
+            document.querySelector('#customerPhone').value = customer.phone || '';
+            document.querySelector('#customerEmail').value = customer.email || '';
+            document.querySelector('#customerPlan').value = customer.plan_id || customer.planId || '';
+            document.querySelector('#subscriptionStart').value = toInputDate(customer.start_date || customer.started_at);
+            document.querySelector('#customerDrawer').classList.add('open');
+            document.querySelector('#customerBackdrop').classList.add('open');
+          });
+        });
+      }
+
+      function toInputDate(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 10);
+      }
+
+      async function confirmDelete(id, button) {
+        const row = button.closest('tr');
+        const actions = row.querySelector('.row-actions');
+        actions.innerHTML = `
+          <span class="confirm-inline open">Delete this customer?</span>
+          <button class="btn btn-danger" type="button" data-confirm-delete>Delete</button>
+          <button class="btn btn-secondary" type="button" data-cancel-delete>Cancel</button>
+        `;
+        actions.querySelector('[data-cancel-delete]').addEventListener('click', renderCustomers);
+        actions.querySelector('[data-confirm-delete]').addEventListener('click', async () => {
+          try {
+            await Cindy.api(`/customers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            customers = customers.filter((customer) => String(customer.id || customer.customer_id || customer.phone) !== String(id));
+            renderCustomers();
+            Cindy.toast('Customer deleted.');
+          } catch (error) {
+            Cindy.toast(error.message);
+            renderCustomers();
+          }
+        });
+      }
+
+      function empty(icon, message) {
+        return `<div class="empty-state"><span class="empty-icon"><i data-lucide="${icon}" class="icon"></i></span><span>${message}</span></div>`;
+      }
+
+      async function saveSubscription(customerId, body) {
+        const current = subscriptions.find((subscription) => String(subscription.customer_id || subscription.customerId) === String(customerId));
+        const payload = await Cindy.api(current ? `/subscriptions/${encodeURIComponent(current.id)}` : '/subscriptions', {
+          method: current ? 'PUT' : 'POST',
+          body: JSON.stringify({
+            customer_id: customerId,
+            plan_id: body.plan_id,
+            start_date: body.start_date || new Date().toISOString().slice(0, 10)
+          })
+        });
+        const saved = payload?.subscription || payload?.data || { ...current, customer_id: customerId, ...body };
+        if (current) {
+          subscriptions = subscriptions.map((subscription) => String(subscription.id) === String(current.id) ? { ...subscription, ...saved } : subscription);
+        } else {
+          subscriptions.unshift(saved);
+        }
+      }
+
+      function enrichedCustomers() {
+        return customers.map((customer) => {
+          const subscription = subscriptions.find((item) => String(item.customer_id || item.customerId) === String(customer.id || customer.customer_id));
+          const plan = plans.find((item) => String(item.id) === String(subscription?.plan_id || subscription?.planId));
+          return {
+            ...customer,
+            plan_id: subscription?.plan_id || subscription?.planId || customer.plan_id,
+            plan_name: customer.plan_name || plan?.name,
+            start_date: subscription?.start_date || subscription?.started_at,
+            expiry_date: customer.expiry_date || subscription?.expiry_date || subscription?.expires_at || subscription?.end_date,
+            subscription_status: customer.subscription_status || subscription?.status
+          };
+        });
+      }
+    </script>
+  </body>
+</html>

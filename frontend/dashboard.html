@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cindy | Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <main class="main">
+        <section class="topbar">
+          <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Today at a glance: members, renewals, and subscription health.</p>
+          </div>
+          <a class="btn btn-primary" href="customers.html"><i data-lucide="user-plus" class="icon"></i>Add customer</a>
+        </section>
+
+        <section class="grid stats-grid" id="statsGrid" aria-live="polite"></section>
+
+        <section class="card">
+          <div class="toolbar">
+            <h2 class="card-title">Expiring this week</h2>
+            <button class="btn btn-secondary" id="refreshDashboard" type="button"><i data-lucide="refresh-cw" class="icon"></i>Refresh</button>
+          </div>
+          <div class="table-wrap" id="expiringTable"></div>
+          <button class="btn btn-secondary load-more" id="loadMoreExpiring" type="button" hidden>Load more</button>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Recent customers</h2>
+          <div class="table-wrap" id="recentTable"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script type="module">
+      import { Cindy } from './assets/app.js';
+
+      let expiringCustomers = [];
+      let expiringVisible = 20;
+
+      if (!Cindy.redirectOnMissingAuth()) {
+        Cindy.layout('dashboard');
+        loadDashboard();
+      }
+
+      document.querySelector('#refreshDashboard').addEventListener('click', loadDashboard);
+      document.querySelector('#loadMoreExpiring').addEventListener('click', () => {
+        expiringVisible += 20;
+        renderExpiring(expiringCustomers);
+      });
+
+      async function loadDashboard() {
+        const refreshButton = document.querySelector('#refreshDashboard');
+        Cindy.setLoading(refreshButton, true, 'Refreshing');
+        try {
+          const [customersPayload, plansPayload, subscriptionsPayload, expiringPayload] = await Promise.all([
+            Cindy.api('/customers').catch(() => []),
+            Cindy.api('/plans').catch(() => []),
+            Cindy.api('/subscriptions').catch(() => []),
+            Cindy.api('/subscriptions/expiring').catch(() => [])
+          ]);
+          const customers = Cindy.normalizeList(customersPayload, ['customers']);
+          const plans = Cindy.normalizeList(plansPayload, ['plans']);
+          const subscriptions = Cindy.normalizeList(subscriptionsPayload, ['subscriptions']);
+          const expiring = Cindy.normalizeList(expiringPayload, ['customers', 'subscriptions', 'expiring']);
+          const enriched = enrichCustomers(customers, subscriptions, plans);
+          renderStats(customers, subscriptions, plans, expiring);
+          expiringCustomers = enrichExpiring(expiring, customers, subscriptions, plans);
+          expiringVisible = 20;
+          renderExpiring(expiringCustomers);
+          renderRecent(enriched);
+        } catch (error) {
+          Cindy.toast(error.message);
+        } finally {
+          Cindy.setLoading(refreshButton, false);
+          Cindy.hydrateIcons();
+        }
+      }
+
+      function renderStats(customers, subscriptions, plans, expiring) {
+        const active = subscriptions.filter((subscription) => Cindy.statusFor(subscription) === 'active').length;
+        const revenue = subscriptions.reduce((sum, subscription) => {
+          const plan = plans.find((item) => String(item.id) === String(subscription.plan_id || subscription.planId));
+          return sum + Number(subscription.amount || subscription.price || plan?.price || 0);
+        }, 0);
+        const stats = [
+          ['Total Customers', customers.length, 'People in your CRM'],
+          ['Active Subscriptions', active, 'Currently in good standing'],
+          ['Revenue This Month', Cindy.formatCurrency(revenue), 'Estimated from active customers'],
+          ['Expiring This Week', expiring.length, 'Needs a quick follow-up']
+        ];
+        document.querySelector('#statsGrid').innerHTML = stats.map(([label, value, note]) => `
+          <article class="card">
+            <div class="stat-label">${label}</div>
+            <div class="stat-value">${value}</div>
+            <div class="stat-note">${note}</div>
+          </article>
+        `).join('');
+      }
+
+      function renderExpiring(customers) {
+        const allExpiring = customers;
+        const expiring = allExpiring.slice(0, expiringVisible);
+        const target = document.querySelector('#expiringTable');
+        document.querySelector('#loadMoreExpiring').hidden = allExpiring.length <= expiringVisible;
+        if (!expiring.length) {
+          target.innerHTML = empty('calendar-clock', 'No renewals need attention this week.');
+          return;
+        }
+        target.innerHTML = `
+          <table class="table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Expiry</th><th></th></tr></thead>
+            <tbody>
+              ${expiring.map((customer) => `
+                <tr>
+                  <td>${Cindy.escapeHtml(customer.name)}</td>
+                  <td>${Cindy.escapeHtml(customer.phone)}</td>
+                  <td>${Cindy.escapeHtml(customer.plan_name || customer.plan || 'Plan')}</td>
+                  <td>${Cindy.formatDate(customer.expiry_date || customer.expires_at || customer.end_date)}</td>
+                  <td>
+                    <a class="btn btn-whatsapp" target="_blank" rel="noopener" href="${Cindy.whatsappUrl(customer.phone, `Hi ${customer.name || 'there'}, your membership is expiring soon. Would you like to renew?`)}">
+                      <img class="icon" alt="" src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/whatsapp.svg">WhatsApp
+                    </a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function renderRecent(customers) {
+        const recent = [...customers].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 8);
+        const target = document.querySelector('#recentTable');
+        if (!recent.length) {
+          target.innerHTML = empty('users', 'New customers will appear here after you add them.');
+          return;
+        }
+        target.innerHTML = `
+          <table class="table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Added</th></tr></thead>
+            <tbody>
+              ${recent.map((customer) => `
+                <tr>
+                  <td>${Cindy.escapeHtml(customer.name)}</td>
+                  <td>${Cindy.escapeHtml(customer.phone)}</td>
+                  <td>${Cindy.badge(Cindy.statusFor(customer))}</td>
+                  <td>${Cindy.formatDate(customer.created_at)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function empty(icon, message) {
+        return `<div class="empty-state"><span class="empty-icon"><i data-lucide="${icon}" class="icon"></i></span><span>${message}</span></div>`;
+      }
+
+      function enrichCustomers(customers, subscriptions, plans) {
+        return customers.map((customer) => {
+          const subscription = subscriptions.find((item) => String(item.customer_id || item.customerId) === String(customer.id || customer.customer_id));
+          const plan = plans.find((item) => String(item.id) === String(subscription?.plan_id || subscription?.planId));
+          return {
+            ...customer,
+            plan_name: customer.plan_name || plan?.name,
+            expiry_date: customer.expiry_date || subscription?.expiry_date || subscription?.expires_at || subscription?.end_date,
+            subscription_status: customer.subscription_status || subscription?.status
+          };
+        });
+      }
+
+      function enrichExpiring(expiring, customers, subscriptions, plans) {
+        return expiring.map((item) => {
+          const customer = item.customer || customers.find((entry) => String(entry.id || entry.customer_id) === String(item.customer_id || item.customerId || item.id));
+          const subscription = item.subscription || subscriptions.find((entry) => String(entry.id) === String(item.subscription_id || item.subscriptionId || item.id));
+          const plan = item.plan || plans.find((entry) => String(entry.id) === String(item.plan_id || item.planId || subscription?.plan_id || subscription?.planId));
+          return {
+            ...item,
+            ...customer,
+            phone: item.phone || customer?.phone,
+            name: item.name || customer?.name,
+            plan_name: item.plan_name || item.plan || plan?.name,
+            expiry_date: item.expiry_date || item.expires_at || item.end_date || subscription?.expiry_date || subscription?.expires_at || subscription?.end_date
+          };
+        });
+      }
+    </script>
+  </body>
+</html>

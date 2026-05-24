@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cindy | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+  </head>
+  <body class="auth-body">
+    <main class="auth-card">
+      <div class="wordmark">
+        <span class="wordmark-mark"><i data-lucide="sparkles" class="icon"></i></span>
+        <span>Cindy</span>
+      </div>
+      <p class="page-subtitle">A calm CRM cockpit for gym owners and small teams.</p>
+
+      <div class="auth-toggle" role="tablist" aria-label="Authentication mode">
+        <button class="active" type="button" data-auth-tab="login">Login</button>
+        <button type="button" data-auth-tab="register">Register</button>
+      </div>
+
+      <form class="form" id="loginForm" autocomplete="on">
+        <div class="field">
+          <label for="loginIdentifier">Email or phone</label>
+          <input id="loginIdentifier" name="identifier" type="text" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="form-message" aria-live="polite"></div>
+        <button class="btn btn-primary" type="submit">Login</button>
+      </form>
+
+      <form class="form" id="registerForm" autocomplete="on" hidden>
+        <div class="field">
+          <label for="registerName">Name</label>
+          <input id="registerName" name="name" type="text" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="registerEmail">Email</label>
+          <input id="registerEmail" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="registerPhone">Phone</label>
+          <input id="registerPhone" name="phone" type="tel" autocomplete="tel" required>
+        </div>
+        <div class="field">
+          <label for="registerPassword">Password</label>
+          <input id="registerPassword" name="password" type="password" autocomplete="new-password" minlength="6" required>
+        </div>
+        <div class="form-message" aria-live="polite"></div>
+        <button class="btn btn-primary" type="submit">Create account</button>
+      </form>
+    </main>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script type="module">
+      import { Cindy } from './assets/app.js';
+
+      Cindy.hydrateIcons();
+
+      const tabs = document.querySelectorAll('[data-auth-tab]');
+      const loginForm = document.querySelector('#loginForm');
+      const registerForm = document.querySelector('#registerForm');
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach((item) => item.classList.toggle('active', item === tab));
+          const mode = tab.dataset.authTab;
+          loginForm.hidden = mode !== 'login';
+          registerForm.hidden = mode !== 'register';
+        });
+      });
+
+      function pickToken(payload) {
+        return payload?.token || payload?.access_token || payload?.session?.access_token;
+      }
+
+      Cindy.withSubmit(loginForm, async (data) => {
+        const identifier = String(data.get('identifier') || '').trim();
+        const body = {
+          password: data.get('password')
+        };
+        body[identifier.includes('@') ? 'email' : 'phone'] = identifier;
+        const payload = await Cindy.api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        const token = pickToken(payload);
+        if (!token) throw new Error('Login succeeded, but no session token was returned.');
+        Cindy.setToken(token, payload.user || payload.data?.user || { email: body.email, phone: body.phone });
+        try {
+          await Cindy.api('/business');
+          window.location.href = 'dashboard.html';
+        } catch {
+          window.location.href = 'create-business.html';
+        }
+      });
+
+      Cindy.withSubmit(registerForm, async (data) => {
+        const payload = await Cindy.api('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(Object.fromEntries(data))
+        });
+        const token = pickToken(payload);
+        if (!token) throw new Error('Account created, but no session token was returned.');
+        Cindy.setToken(token, payload.user || payload.data?.user || { name: data.get('name'), email: data.get('email'), phone: data.get('phone') });
+        window.location.href = 'create-business.html';
+      });
+    </script>
+  </body>
+</html>
