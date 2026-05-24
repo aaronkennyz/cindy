@@ -92,7 +92,7 @@
       let visibleCount = 20;
       const drawer = Cindy.bindDrawer('#openCustomerDrawer', '#customerDrawer', '#customerBackdrop');
 
-      if (!Cindy.redirectOnMissingAuth()) {
+      if (await Cindy.requireWorkspace('customers')) {
         Cindy.layout('customers');
         loadCustomers();
       }

@@ -1,17 +1,13 @@
 import supabase from '../config/supabase.js'
-
-const getBusinessId = async (owner_id) => {
-  const { data } = await supabase
-    .from('businesses')
-    .select('id')
-    .eq('owner_id', owner_id)
-    .single()
-  return data?.id
+const getBusinessId = (req) => {
+  const id = req.headers['x-business-id']
+  if (!id) throw new Error('No active business selected')
+  return id
 }
 
 // GET /api/messages
 export const getMessages = async (req, res) => {
-  const business_id = await getBusinessId(req.owner.id)
+ const business_id = getBusinessId(req)
   if (!business_id) return res.status(404).json({ error: 'Business not found' })
 
   try {

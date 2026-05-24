@@ -45,7 +45,7 @@
       let expiringCustomers = [];
       let expiringVisible = 20;
 
-      if (!Cindy.redirectOnMissingAuth()) {
+      if (await Cindy.requireWorkspace('dashboard')) {
         Cindy.layout('dashboard');
         loadDashboard();
       }

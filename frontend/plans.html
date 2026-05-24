@@ -61,7 +61,7 @@
       let plans = [];
       const drawer = Cindy.bindDrawer('#openPlanDrawer', '#planDrawer', '#planBackdrop');
 
-      if (!Cindy.redirectOnMissingAuth()) {
+      if (await Cindy.requireWorkspace('plans')) {
         Cindy.layout('plans');
         loadPlans();
       }

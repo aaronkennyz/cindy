@@ -74,7 +74,7 @@
       let visibleCount = 20;
       const selected = new Set();
 
-      if (!Cindy.redirectOnMissingAuth()) {
+      if (await Cindy.requireWorkspace('messaging')) {
         Cindy.layout('messaging');
         loadCustomers();
         renderPreview();

@@ -93,12 +93,7 @@
         const token = pickToken(payload);
         if (!token) throw new Error('Login succeeded, but no session token was returned.');
         Cindy.setToken(token, payload.user || payload.data?.user || { email: body.email, phone: body.phone });
-        try {
-          await Cindy.api('/business');
-          window.location.href = 'dashboard.html';
-        } catch {
-          window.location.href = 'create-business.html';
-        }
+        await Cindy.routeAfterBusinessCheck();
       });
 
       Cindy.withSubmit(registerForm, async (data) => {

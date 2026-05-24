@@ -54,10 +54,16 @@
       });
 
       Cindy.withSubmit(document.querySelector('#businessForm'), async (data) => {
-        await Cindy.api('/business', {
+        const payload = await Cindy.api('/business', {
           method: 'POST',
           body: JSON.stringify(Object.fromEntries(data))
         });
+        const business = payload?.business || payload?.data || payload;
+        if (business?.id) {
+          const businesses = await Cindy.loadBusinesses().catch(() => [business]);
+          Cindy.setBusinesses(businesses);
+          Cindy.setSelectedBusinessId(business.id);
+        }
         Cindy.toast('Workspace created.');
         window.location.href = 'dashboard.html';
       });

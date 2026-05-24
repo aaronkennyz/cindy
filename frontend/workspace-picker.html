@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cindy | Choose Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+  </head>
+  <body class="auth-body">
+    <main class="setup-card">
+      <div class="toolbar">
+        <div class="wordmark">
+          <span class="wordmark-mark"><i data-lucide="sparkles" class="icon"></i></span>
+          <span>Cindy</span>
+        </div>
+        <button class="btn btn-secondary" type="button" id="logoutButton">
+          <i data-lucide="log-out" class="icon"></i>
+          Logout
+        </button>
+      </div>
+      <h1 class="page-title" style="margin-top: 32px;">Choose a workspace</h1>
+      <p class="page-subtitle">Select the business you want to manage right now.</p>
+
+      <section class="business-options" id="workspaceList" aria-live="polite"></section>
+      <a class="btn btn-secondary" href="create-business.html">
+        <i data-lucide="plus" class="icon"></i>
+        Create another workspace
+      </a>
+    </main>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script type="module">
+      import { Cindy } from './assets/app.js';
+
+      document.querySelector('#logoutButton').addEventListener('click', Cindy.logout);
+
+      if (!Cindy.redirectOnMissingAuth()) {
+        await loadWorkspaces();
+      }
+
+      async function loadWorkspaces() {
+        try {
+          const businesses = await Cindy.loadBusinesses();
+          const target = document.querySelector('#workspaceList');
+          if (!businesses.length) {
+            window.location.href = 'create-business.html';
+            return;
+          }
+          if (businesses.length === 1) {
+            Cindy.setSelectedBusinessId(businesses[0].id);
+            window.location.href = 'dashboard.html';
+            return;
+          }
+          target.innerHTML = businesses.map((business) => `
+            <button class="business-card" type="button" data-business-id="${Cindy.escapeHtml(business.id)}">
+              <i data-lucide="${iconForType(business.type)}" class="icon"></i>
+              <strong>${Cindy.escapeHtml(business.name || 'Untitled business')}</strong>
+              <small>${Cindy.escapeHtml(business.type || 'Business')}</small>
+            </button>
+          `).join('');
+          target.querySelectorAll('[data-business-id]').forEach((button) => {
+            button.addEventListener('click', () => {
+              Cindy.setSelectedBusinessId(button.dataset.businessId);
+              window.location.href = 'dashboard.html';
+            });
+          });
+          Cindy.hydrateIcons();
+        } catch (error) {
+          document.querySelector('#workspaceList').innerHTML = `
+            <div class="empty-state">
+              <span class="empty-icon"><i data-lucide="wifi-off" class="icon"></i></span>
+              <span>${Cindy.escapeHtml(error.message)}</span>
+            </div>
+          `;
+          Cindy.hydrateIcons();
+        }
+      }
+
+      function iconForType(type) {
+        const normalized = String(type || '').toLowerCase();
+        if (normalized.includes('gym')) return 'dumbbell';
+        if (normalized.includes('cafe')) return 'coffee';
+        if (normalized.includes('bakery')) return 'croissant';
+        if (normalized.includes('salon')) return 'scissors';
+        return 'store';
+      }
+    </script>
+  </body>
+</html>

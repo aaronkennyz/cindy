@@ -10,17 +10,6 @@ export const createBusiness = async (req, res) => {
   }
 
   try {
-    // Owner can only have one business for now
-    const { data: existing } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', owner_id)
-      .single()
-
-    if (existing) {
-      return res.status(409).json({ error: 'Business already exists for this owner' })
-    }
-
     const { data, error } = await supabase
       .from('businesses')
       .insert([{ owner_id, name, type }])
@@ -30,11 +19,13 @@ export const createBusiness = async (req, res) => {
     if (error) throw error
     res.status(201).json(data)
   } catch (err) {
+    console.error('CREATE BUSINESS ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
 
 // GET /api/business
+// Returns all businesses for the logged in owner
 export const getBusiness = async (req, res) => {
   const owner_id = req.owner.id
 
@@ -43,11 +34,35 @@ export const getBusiness = async (req, res) => {
       .from('businesses')
       .select('*')
       .eq('owner_id', owner_id)
-      .single()
+      .order('created_at', { ascending: true })
 
     if (error) throw error
     res.json(data)
   } catch (err) {
+    console.error('GET BUSINESS ERROR:', err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
+// GET /api/business/:id
+// Returns a single business by id (must belong to the logged in owner)
+export const getBusinessById = async (req, res) => {
+  const { id } = req.params
+  const owner_id = req.owner.id
+
+  try {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', id)
+      .eq('owner_id', owner_id)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return res.status(404).json({ error: 'Business not found' })
+    res.json(data)
+  } catch (err) {
+    console.error('GET BUSINESS BY ID ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -65,11 +80,33 @@ export const updateBusiness = async (req, res) => {
       .eq('id', id)
       .eq('owner_id', owner_id)
       .select()
-      .single()
+      .maybeSingle()
 
     if (error) throw error
+    if (!data) return res.status(404).json({ error: 'Business not found' })
     res.json(data)
   } catch (err) {
+    console.error('UPDATE BUSINESS ERROR:', err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
+// DELETE /api/business/:id
+export const deleteBusiness = async (req, res) => {
+  const { id } = req.params
+  const owner_id = req.owner.id
+
+  try {
+    const { error } = await supabase
+      .from('businesses')
+      .delete()
+      .eq('id', id)
+      .eq('owner_id', owner_id)
+
+    if (error) throw error
+    res.json({ message: 'Business deleted' })
+  } catch (err) {
+    console.error('DELETE BUSINESS ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }

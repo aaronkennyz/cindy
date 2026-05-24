@@ -4,6 +4,8 @@ export const Cindy = (() => {
   const authStateKey = 'cindy:auth';
   let authToken = null;
   let currentUser = null;
+  let businesses = [];
+  let selectedBusinessId = null;
 
   function loadWindowAuth() {
     if (!window.name) return;
@@ -12,6 +14,8 @@ export const Cindy = (() => {
       if (parsed && parsed.key === authStateKey && parsed.token) {
         authToken = parsed.token;
         currentUser = parsed.user || null;
+        businesses = Array.isArray(parsed.businesses) ? parsed.businesses : [];
+        selectedBusinessId = parsed.selectedBusinessId || null;
       }
     } catch {
       authToken = null;
@@ -22,7 +26,19 @@ export const Cindy = (() => {
   function setToken(token, user) {
     authToken = token || null;
     currentUser = user || null;
-    window.name = authToken ? JSON.stringify({ key: authStateKey, token: authToken, user: currentUser }) : '';
+    businesses = [];
+    selectedBusinessId = null;
+    persistState();
+  }
+
+  function persistState() {
+    window.name = authToken ? JSON.stringify({
+      key: authStateKey,
+      token: authToken,
+      user: currentUser,
+      businesses,
+      selectedBusinessId
+    }) : '';
   }
 
   function logout() {
@@ -46,6 +62,10 @@ export const Cindy = (() => {
 
     if (authToken) {
       headers.Authorization = `Bearer ${authToken}`;
+    }
+
+    if (selectedBusinessId && !isBusinessAgnosticRoute(path)) {
+      headers['x-business-id'] = selectedBusinessId;
     }
 
     const response = await fetch(`${API_BASE}${path}`, {
@@ -77,6 +97,10 @@ export const Cindy = (() => {
     return 'The request could not be completed.';
   }
 
+  function isBusinessAgnosticRoute(path) {
+    return path.startsWith('/auth') || path.startsWith('/business');
+  }
+
   function normalizeList(payload, keys = []) {
     if (Array.isArray(payload)) return payload;
     for (const key of keys) {
@@ -84,6 +108,70 @@ export const Cindy = (() => {
     }
     if (Array.isArray(payload?.data)) return payload.data;
     return [];
+  }
+
+  async function loadBusinesses() {
+    const payload = await api('/business');
+    businesses = normalizeList(payload, ['businesses']);
+    if (!selectedBusinessId && businesses.length === 1) {
+      selectedBusinessId = businesses[0].id;
+    }
+    if (selectedBusinessId && !businesses.some((business) => String(business.id) === String(selectedBusinessId))) {
+      selectedBusinessId = businesses.length === 1 ? businesses[0].id : null;
+    }
+    persistState();
+    return businesses;
+  }
+
+  function setBusinesses(nextBusinesses) {
+    businesses = Array.isArray(nextBusinesses) ? nextBusinesses : [];
+    if (selectedBusinessId && !businesses.some((business) => String(business.id) === String(selectedBusinessId))) {
+      selectedBusinessId = businesses.length === 1 ? businesses[0].id : null;
+    }
+    persistState();
+  }
+
+  function setSelectedBusinessId(id) {
+    selectedBusinessId = id || null;
+    persistState();
+  }
+
+  function selectedBusiness() {
+    return businesses.find((business) => String(business.id) === String(selectedBusinessId)) || null;
+  }
+
+  async function routeAfterBusinessCheck() {
+    const ownerBusinesses = await loadBusinesses();
+    if (!ownerBusinesses.length) {
+      window.location.href = 'create-business.html';
+      return;
+    }
+    if (ownerBusinesses.length === 1) {
+      setSelectedBusinessId(ownerBusinesses[0].id);
+      window.location.href = 'dashboard.html';
+      return;
+    }
+    window.location.href = 'workspace-picker.html';
+  }
+
+  async function requireWorkspace(currentPage = '') {
+    if (redirectOnMissingAuth()) return false;
+    if (!businesses.length) {
+      await loadBusinesses();
+    }
+    if (!businesses.length) {
+      window.location.href = 'create-business.html';
+      return false;
+    }
+    if (!selectedBusinessId) {
+      if (businesses.length === 1) {
+        setSelectedBusinessId(businesses[0].id);
+      } else if (currentPage !== 'workspace-picker') {
+        window.location.href = 'workspace-picker.html';
+        return false;
+      }
+    }
+    return true;
   }
 
   function setLoading(button, loading, label) {
@@ -164,12 +252,26 @@ export const Cindy = (() => {
 
   function layout(active) {
     const owner = currentUser?.name || currentUser?.email || 'Owner';
+    const currentBusiness = selectedBusiness();
     document.body.insertAdjacentHTML('afterbegin', `
       <aside class="sidebar">
         <a class="wordmark" href="dashboard.html" aria-label="Cindy dashboard">
           <span class="wordmark-mark"><i data-lucide="sparkles" class="icon"></i></span>
           <span>Cindy</span>
         </a>
+        ${businesses.length ? `
+          <div class="workspace-switcher">
+            <label for="workspaceSwitch">Workspace</label>
+            <select id="workspaceSwitch" aria-label="Switch workspace">
+              ${businesses.map((business) => `
+                <option value="${escapeHtml(business.id)}" ${String(business.id) === String(selectedBusinessId) ? 'selected' : ''}>
+                  ${escapeHtml(business.name || 'Untitled business')}
+                </option>
+              `).join('')}
+            </select>
+            ${currentBusiness?.type ? `<span>${escapeHtml(currentBusiness.type)}</span>` : ''}
+          </div>
+        ` : ''}
         <nav class="nav" aria-label="Main navigation">
           ${navItem('dashboard', 'dashboard.html', 'layout-dashboard', 'Dashboard', active)}
           ${navItem('customers', 'customers.html', 'users', 'Customers', active)}
@@ -189,6 +291,10 @@ export const Cindy = (() => {
       </aside>
     `);
     document.querySelector('[data-logout]')?.addEventListener('click', logout);
+    document.querySelector('#workspaceSwitch')?.addEventListener('change', (event) => {
+      setSelectedBusinessId(event.target.value);
+      window.location.reload();
+    });
     hydrateIcons();
   }
 
@@ -252,15 +358,23 @@ export const Cindy = (() => {
     api,
     badge,
     bindDrawer,
+    businesses: () => businesses,
     currentUser: () => currentUser,
     escapeHtml,
     formatCurrency,
     formatDate,
     hydrateIcons,
     layout,
+    loadBusinesses,
     logout,
     normalizeList,
     redirectOnMissingAuth,
+    requireWorkspace,
+    routeAfterBusinessCheck,
+    selectedBusiness,
+    selectedBusinessId: () => selectedBusinessId,
+    setBusinesses,
+    setSelectedBusinessId,
     setLoading,
     setToken,
     statusFor,
