@@ -16,7 +16,7 @@ const app = express()
 app.use(cors({
   origin: [
     'http://localhost:4040',
-    'https://your-netlify-url.netlify.app'
+    'https://cindycrm.netlify.app/'
   ],
   credentials: true
 }))
