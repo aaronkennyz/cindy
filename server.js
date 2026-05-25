@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import rateLimit from 'express-rate-limit'
 
 import authRoutes from './routes/auth.js'
 import businessRoutes from './routes/business.js'
@@ -13,6 +14,11 @@ dotenv.config()
 
 const app = express()
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+})
+
 app.use(cors({
   origin: [
     'http://localhost:4040',
@@ -21,9 +27,9 @@ app.use(cors({
   credentials: true
 }))
 app.use(express.json())
+app.use('/api/', limiter)
 app.use(express.static('frontend'))
 
-// Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/business', businessRoutes)
 app.use('/api/customers', customerRoutes)
@@ -31,7 +37,6 @@ app.use('/api/plans', planRoutes)
 app.use('/api/subscriptions', subscriptionRoutes)
 app.use('/api/messages', messageRoutes)
 
-// Health check
 app.get('/api/health', (req, res) => res.json({ status: 'Cindy is running' }))
 
 const PORT = process.env.PORT || 3000
