@@ -1,4 +1,4 @@
-import { API_BASE } from '../config.js';
+import { API_BASE } from './config.js';
 
 export const Cindy = (() => {
   const authStateKey = 'cindy:auth';
