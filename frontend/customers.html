@@ -54,7 +54,7 @@
         <button class="btn btn-ghost" type="button" data-close-drawer aria-label="Close"><i data-lucide="x" class="icon"></i></button>
       </div>
       <div class="drawer-body">
-        <form class="form" id="customerForm">
+        <form class="form" id="customerForm" method="post">
           <input id="customerId" name="id" type="hidden">
           <div class="field">
             <label for="customerName">Name</label>
@@ -196,7 +196,7 @@
         }
         target.innerHTML = `
           <table class="table">
-            <thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Status</th><th>Expiry</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Plan</th><th>Status</th><th>Joined</th><th>Expiry</th><th></th></tr></thead>
             <tbody>
               ${page.map((customer) => {
                 const id = customer.id || customer.customer_id || customer.phone;
@@ -204,8 +204,10 @@
                   <tr data-id="${Cindy.escapeHtml(id)}">
                     <td>${Cindy.escapeHtml(customer.name)}</td>
                     <td>${Cindy.escapeHtml(customer.phone)}</td>
+                    <td>${Cindy.escapeHtml(customer.email || 'Not set')}</td>
                     <td>${Cindy.escapeHtml(customer.plan_name || customer.plan || findPlanName(customer.plan_id))}</td>
-                    <td>${Cindy.badge(Cindy.statusFor(customer))}</td>
+                    <td>${Cindy.badge(Cindy.statusFor({ ...customer, status: customer.status }))}</td>
+                    <td>${Cindy.formatDate(customer.joined_at || customer.created_at)}</td>
                     <td>${Cindy.formatDate(customer.expiry_date || customer.expires_at || customer.end_date)}</td>
                     <td>
                       <div class="row-actions">

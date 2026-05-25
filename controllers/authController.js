@@ -87,3 +87,47 @@ export const login = async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 }
+
+// GET /api/auth/profile
+export const getProfile = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('owners')
+      .select('id, name, email, phone, created_at')
+      .eq('id', req.owner.id)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return res.status(404).json({ error: 'Owner not found' })
+    res.json(data)
+  } catch (err) {
+    console.error('GET PROFILE ERROR:', err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
+// PUT /api/auth/profile
+export const updateProfile = async (req, res) => {
+  const { name, email, phone, password } = req.body
+
+  try {
+    const updates = {}
+    if (name) updates.name = name
+    if (email) updates.email = email
+    if (phone) updates.phone = phone
+    if (password) updates.password_hash = await bcrypt.hash(password, 10)
+
+    const { data, error } = await supabase
+      .from('owners')
+      .update(updates)
+      .eq('id', req.owner.id)
+      .select('id, name, email, phone')
+      .maybeSingle()
+
+    if (error) throw error
+    res.json(data)
+  } catch (err) {
+    console.error('UPDATE PROFILE ERROR:', err)
+    res.status(500).json({ error: err.message })
+  }
+}

@@ -8,33 +8,31 @@ const getBusinessId = (req) => {
 
 // GET /api/customers
 export const getCustomers = async (req, res) => {
-  const business_id = getBusinessId(req)
-  if (!business_id) return res.status(404).json({ error: 'Business not found' })
-
   try {
+    const business_id = getBusinessId(req)
+
     const { data, error } = await supabase
-  .from('customers')
-  .update({ name, phone, email, status })
-  .eq('id', id)
-  .select()
-  .maybeSingle()
+      .from('customers')
+      .select('*')
+      .eq('business_id', business_id)
+      .order('joined_at', { ascending: false })
 
     if (error) throw error
     res.json(data)
   } catch (err) {
+    console.error('GET CUSTOMERS ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
 
 // POST /api/customers
 export const addCustomer = async (req, res) => {
-  const business_id = await getBusinessId(req.owner.id)
-  if (!business_id) return res.status(404).json({ error: 'Business not found' })
-
-  const { name, phone, email } = req.body
-  if (!name) return res.status(400).json({ error: 'Customer name is required' })
-
   try {
+    const business_id = getBusinessId(req)
+    const { name, phone, email } = req.body
+
+    if (!name) return res.status(400).json({ error: 'Customer name is required' })
+
     const { data, error } = await supabase
       .from('customers')
       .insert([{ business_id, name, phone, email }])
@@ -44,6 +42,7 @@ export const addCustomer = async (req, res) => {
     if (error) throw error
     res.status(201).json(data)
   } catch (err) {
+    console.error('ADD CUSTOMER ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -59,11 +58,13 @@ export const updateCustomer = async (req, res) => {
       .update({ name, phone, email, status })
       .eq('id', id)
       .select()
-      .single()
+      .maybeSingle()
 
     if (error) throw error
+    if (!data) return res.status(404).json({ error: 'Customer not found' })
     res.json(data)
   } catch (err) {
+    console.error('UPDATE CUSTOMER ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -81,6 +82,7 @@ export const deleteCustomer = async (req, res) => {
     if (error) throw error
     res.json({ message: 'Customer removed' })
   } catch (err) {
+    console.error('DELETE CUSTOMER ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }

@@ -8,10 +8,9 @@ const getBusinessId = (req) => {
 
 // GET /api/plans
 export const getPlans = async (req, res) => {
- const business_id = getBusinessId(req)
-  if (!business_id) return res.status(404).json({ error: 'Business not found' })
-
   try {
+    const business_id = getBusinessId(req)
+
     const { data, error } = await supabase
       .from('plans')
       .select('*')
@@ -20,21 +19,21 @@ export const getPlans = async (req, res) => {
     if (error) throw error
     res.json(data)
   } catch (err) {
+    console.error('GET PLANS ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
 
 // POST /api/plans
 export const createPlan = async (req, res) => {
-  const business_id = await getBusinessId(req.owner.id)
-  if (!business_id) return res.status(404).json({ error: 'Business not found' })
-
-  const { name, price, duration_days } = req.body
-  if (!name || !price || !duration_days) {
-    return res.status(400).json({ error: 'Name, price, and duration are required' })
-  }
-
   try {
+    const business_id = getBusinessId(req)
+    const { name, price, duration_days } = req.body
+
+    if (!name || !price || !duration_days) {
+      return res.status(400).json({ error: 'Name, price, and duration are required' })
+    }
+
     const { data, error } = await supabase
       .from('plans')
       .insert([{ business_id, name, price, duration_days }])
@@ -44,6 +43,7 @@ export const createPlan = async (req, res) => {
     if (error) throw error
     res.status(201).json(data)
   } catch (err) {
+    console.error('CREATE PLAN ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -62,8 +62,10 @@ export const updatePlan = async (req, res) => {
       .maybeSingle()
 
     if (error) throw error
+    if (!data) return res.status(404).json({ error: 'Plan not found' })
     res.json(data)
   } catch (err) {
+    console.error('UPDATE PLAN ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -81,6 +83,7 @@ export const deletePlan = async (req, res) => {
     if (error) throw error
     res.json({ message: 'Plan deleted' })
   } catch (err) {
+    console.error('DELETE PLAN ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }

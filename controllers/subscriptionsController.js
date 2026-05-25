@@ -8,10 +8,21 @@ const getBusinessId = (req) => {
 
 // GET /api/subscriptions
 export const getSubscriptions = async (req, res) => {
-  const business_id = getBusinessId(req)
-  if (!business_id) return res.status(404).json({ error: 'Business not found' })
-
   try {
+    const business_id = getBusinessId(req)
+
+    // First get all customer IDs belonging to this business
+    const { data: customers, error: custError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('business_id', business_id)
+
+    if (custError) throw custError
+
+    const customerIds = customers.map(c => c.id)
+
+    if (customerIds.length === 0) return res.json([])
+
     const { data, error } = await supabase
       .from('subscriptions')
       .select(`
@@ -19,42 +30,49 @@ export const getSubscriptions = async (req, res) => {
         customers (id, name, phone, email),
         plans (id, name, price, duration_days)
       `)
-      .eq('customers.business_id', business_id)
+      .in('customer_id', customerIds)
       .order('end_date', { ascending: true })
 
     if (error) throw error
     res.json(data)
   } catch (err) {
+    console.error('GET SUBSCRIPTIONS ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
-
 // GET /api/subscriptions/expiring
-// Returns subscriptions expiring in the next 7 days
 export const getExpiringSubscriptions = async (req, res) => {
-  const business_id = await getBusinessId(req.owner.id)
-  if (!business_id) return res.status(404).json({ error: 'Business not found' })
-
-  const today = new Date().toISOString().split('T')[0]
-  const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
   try {
+    const business_id = getBusinessId(req)
+
+    const today = new Date().toISOString().split('T')[0]
+    const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+    const { data: customers, error: custError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('business_id', business_id)
+
+    if (custError) throw custError
+
+    const customerIds = customers.map(c => c.id)
+    if (customerIds.length === 0) return res.json([])
+
     const { data, error } = await supabase
       .from('subscriptions')
       .select(`
         *,
-        customers (id, name, phone, email, business_id),
+        customers (id, name, phone, email),
         plans (id, name, price)
       `)
+      .in('customer_id', customerIds)
       .gte('end_date', today)
       .lte('end_date', in7Days)
 
     if (error) throw error
-
-    // Filter by business
-    const filtered = data.filter(s => s.customers?.business_id === business_id)
-    res.json(filtered)
+    res.json(data)
   } catch (err) {
+    console.error('GET EXPIRING ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -68,7 +86,6 @@ export const createSubscription = async (req, res) => {
   }
 
   try {
-    // Get plan to calculate end date
     const { data: plan, error: planError } = await supabase
       .from('plans')
       .select('duration_days')
@@ -91,6 +108,7 @@ export const createSubscription = async (req, res) => {
     if (error) throw error
     res.status(201).json(data)
   } catch (err) {
+    console.error('CREATE SUBSCRIPTION ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -109,8 +127,10 @@ export const updateSubscription = async (req, res) => {
       .maybeSingle()
 
     if (error) throw error
+    if (!data) return res.status(404).json({ error: 'Subscription not found' })
     res.json(data)
   } catch (err) {
+    console.error('UPDATE SUBSCRIPTION ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }
@@ -128,6 +148,7 @@ export const deleteSubscription = async (req, res) => {
     if (error) throw error
     res.json({ message: 'Subscription removed' })
   } catch (err) {
+    console.error('DELETE SUBSCRIPTION ERROR:', err)
     res.status(500).json({ error: err.message })
   }
 }

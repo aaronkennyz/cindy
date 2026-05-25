@@ -2,10 +2,44 @@ import { API_BASE } from '../config.js';
 
 export const Cindy = (() => {
   const authStateKey = 'cindy:auth';
+  const themeClasses = ['theme-default', 'theme-youtube'];
+  const themes = {
+    default: {
+      '--bg-base': '#0f0f0f',
+      '--bg-surface': '#1a1a1a',
+      '--bg-elevated': '#222222',
+      '--border': '#2e2e2e',
+      '--accent': '#6c63ff',
+      '--accent-hover': '#574fd6',
+      '--accent-soft': 'rgba(108, 99, 255, 0.12)',
+      '--text-primary': '#f0f0f0',
+      '--text-secondary': '#888888',
+      '--text-muted': '#555555',
+      '--success': '#22c55e',
+      '--warning': '#f59e0b',
+      '--danger': '#ef4444'
+    },
+    youtube: {
+      '--bg-base': '#0f0f0f',
+      '--bg-surface': '#1a1a1a',
+      '--bg-elevated': '#272727',
+      '--border': '#303030',
+      '--accent': '#ff0000',
+      '--accent-hover': '#cc0000',
+      '--accent-soft': 'rgba(255, 0, 0, 0.12)',
+      '--text-primary': '#f1f1f1',
+      '--text-secondary': '#aaaaaa',
+      '--text-muted': '#606060',
+      '--success': '#2ba640',
+      '--warning': '#f59e0b',
+      '--danger': '#ff4444'
+    }
+  };
   let authToken = null;
   let currentUser = null;
   let businesses = [];
   let selectedBusinessId = null;
+  let selectedTheme = 'default';
 
   function loadWindowAuth() {
     if (!window.name) return;
@@ -16,10 +50,12 @@ export const Cindy = (() => {
         currentUser = parsed.user || null;
         businesses = Array.isArray(parsed.businesses) ? parsed.businesses : [];
         selectedBusinessId = parsed.selectedBusinessId || null;
+        selectedTheme = themes[parsed.selectedTheme] ? parsed.selectedTheme : 'default';
       }
     } catch {
       authToken = null;
       currentUser = null;
+      selectedTheme = 'default';
     }
   }
 
@@ -37,8 +73,24 @@ export const Cindy = (() => {
       token: authToken,
       user: currentUser,
       businesses,
-      selectedBusinessId
+      selectedBusinessId,
+      selectedTheme
     }) : '';
+  }
+
+  function applyTheme(themeName = selectedTheme) {
+    selectedTheme = themes[themeName] ? themeName : 'default';
+    const values = themes[selectedTheme];
+    Object.entries(values).forEach(([property, value]) => {
+      document.documentElement.style.setProperty(property, value);
+    });
+    document.body?.classList.remove(...themeClasses);
+    document.body?.classList.add(`theme-${selectedTheme}`);
+  }
+
+  function setTheme(themeName) {
+    applyTheme(themeName);
+    persistState();
   }
 
   function logout() {
@@ -64,7 +116,7 @@ export const Cindy = (() => {
       headers.Authorization = `Bearer ${authToken}`;
     }
 
-    if (selectedBusinessId && !isBusinessAgnosticRoute(path)) {
+    if (selectedBusinessId && !isAuthCredentialRoute(path)) {
       headers['x-business-id'] = selectedBusinessId;
     }
 
@@ -97,8 +149,8 @@ export const Cindy = (() => {
     return 'The request could not be completed.';
   }
 
-  function isBusinessAgnosticRoute(path) {
-    return path.startsWith('/auth') || path.startsWith('/business');
+  function isAuthCredentialRoute(path) {
+    return path === '/auth/login' || path === '/auth/register';
   }
 
   function normalizeList(payload, keys = []) {
@@ -128,6 +180,11 @@ export const Cindy = (() => {
     if (selectedBusinessId && !businesses.some((business) => String(business.id) === String(selectedBusinessId))) {
       selectedBusinessId = businesses.length === 1 ? businesses[0].id : null;
     }
+    persistState();
+  }
+
+  function setCurrentUser(user) {
+    currentUser = user || currentUser;
     persistState();
   }
 
@@ -277,6 +334,8 @@ export const Cindy = (() => {
           ${navItem('customers', 'customers.html', 'users', 'Customers', active)}
           ${navItem('plans', 'plans.html', 'badge-dollar-sign', 'Plans', active)}
           ${navItem('messaging', 'messaging.html', 'message-circle', 'Messages', active)}
+          ${navItem('businesses', 'businesses.html', 'building-2', 'Businesses', active)}
+          ${navItem('profile', 'profile.html', 'settings', 'Profile', active)}
         </nav>
         <div class="sidebar-footer">
           <div>
@@ -293,7 +352,7 @@ export const Cindy = (() => {
     document.querySelector('[data-logout]')?.addEventListener('click', logout);
     document.querySelector('#workspaceSwitch')?.addEventListener('change', (event) => {
       setSelectedBusinessId(event.target.value);
-      window.location.reload();
+      window.location.href = 'dashboard.html';
     });
     hydrateIcons();
   }
@@ -331,27 +390,35 @@ export const Cindy = (() => {
   }
 
   function withSubmit(form, handler) {
-    form?.addEventListener('submit', async (event) => {
+    if (!(form instanceof HTMLFormElement)) return;
+
+    form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const button = form.querySelector('[type="submit"]');
-      const message = form.querySelector('.form-message');
+      void handleSubmit(event);
+    });
+
+    async function handleSubmit(event) {
+      const currentForm = event.currentTarget;
+      const button = currentForm.querySelector('[type="submit"]');
+      const message = currentForm.querySelector('.form-message');
       if (message) {
         message.textContent = '';
         message.classList.remove('success');
       }
       try {
         setLoading(button, true);
-        await handler(new FormData(form), form);
+        await handler(new FormData(currentForm), currentForm);
       } catch (error) {
         if (message) message.textContent = error.message;
         else toast(error.message);
       } finally {
         setLoading(button, false);
       }
-    });
+    }
   }
 
   loadWindowAuth();
+  applyTheme();
 
   return {
     API_BASE,
@@ -359,6 +426,7 @@ export const Cindy = (() => {
     badge,
     bindDrawer,
     businesses: () => businesses,
+    currentTheme: () => selectedTheme,
     currentUser: () => currentUser,
     escapeHtml,
     formatCurrency,
@@ -374,9 +442,11 @@ export const Cindy = (() => {
     selectedBusiness,
     selectedBusinessId: () => selectedBusinessId,
     setBusinesses,
+    setCurrentUser,
     setSelectedBusinessId,
     setLoading,
     setToken,
+    setTheme,
     statusFor,
     toast,
     whatsappUrl,

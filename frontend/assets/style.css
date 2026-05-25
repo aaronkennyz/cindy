@@ -33,6 +33,38 @@ body {
   line-height: 1.5;
 }
 
+body.theme-default {
+  --bg-base: #0f0f0f;
+  --bg-surface: #1a1a1a;
+  --bg-elevated: #222222;
+  --border: #2e2e2e;
+  --accent: #6c63ff;
+  --accent-hover: #574fd6;
+  --accent-soft: rgba(108, 99, 255, 0.12);
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+body.theme-youtube {
+  --bg-base: #0f0f0f;
+  --bg-surface: #1a1a1a;
+  --bg-elevated: #272727;
+  --border: #303030;
+  --accent: #ff0000;
+  --accent-hover: #cc0000;
+  --accent-soft: rgba(255, 0, 0, 0.12);
+  --text-primary: #f1f1f1;
+  --text-secondary: #aaaaaa;
+  --text-muted: #606060;
+  --success: #2ba640;
+  --warning: #f59e0b;
+  --danger: #ff4444;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -234,6 +266,10 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.business-list {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
 .stat-label {
   color: var(--text-secondary);
   font-weight: 500;
@@ -426,6 +462,38 @@ button {
   color: var(--text-primary);
 }
 
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.theme-option {
+  display: grid;
+  gap: 8px;
+  min-height: 88px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  padding: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.theme-option:hover,
+.theme-option.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.theme-option strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -607,6 +675,13 @@ button {
   color: var(--accent);
 }
 
+.business-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .business-card strong {
   color: var(--text-primary);
   font-weight: 600;
@@ -694,7 +769,7 @@ button {
   .nav {
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 4px;
     margin: 0;
   }
@@ -741,5 +816,363 @@ button {
   .toast-region {
     right: 16px;
     bottom: 80px;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .page-shell {
+    padding: 72px 0 92px;
+  }
+
+  .sidebar {
+    position: static;
+    inset: auto;
+    display: block;
+    width: auto;
+    height: 0;
+    border: 0;
+    background: transparent;
+    padding: 0;
+  }
+
+  .sidebar .wordmark {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 35;
+    display: inline-flex;
+    width: 50%;
+    height: 64px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-sidebar);
+    font-size: 18px;
+    padding: 0 16px;
+  }
+
+  .sidebar .wordmark-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .sidebar .workspace-switcher {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 35;
+    display: grid;
+    width: 50%;
+    height: 64px;
+    align-content: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-sidebar);
+    margin: 0;
+    padding: 0 16px 0 8px;
+  }
+
+  .sidebar .workspace-switcher label,
+  .sidebar .workspace-switcher span,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar .workspace-switcher select {
+    min-height: 44px;
+    overflow: hidden;
+    border-color: transparent;
+    background: var(--bg-base);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 35;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--border);
+    background: var(--bg-sidebar);
+    margin: 0;
+    padding: 6px 6px max(6px, env(safe-area-inset-bottom));
+  }
+
+  .nav-item {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 58px;
+    border-bottom: 3px solid transparent;
+    border-left: 0;
+    border-radius: 8px;
+    padding: 6px 2px;
+  }
+
+  .nav-item.active {
+    border-bottom-color: var(--accent);
+    border-left-color: transparent;
+  }
+
+  .nav-label {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+    font-size: 11px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .main {
+    gap: 24px;
+    padding: 16px;
+  }
+
+  .topbar,
+  .toolbar {
+    display: grid;
+    gap: 16px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .card,
+  .auth-card,
+  .setup-card {
+    padding: 16px;
+  }
+
+  .grid,
+  .stats-grid,
+  .two-column,
+  .plans-grid,
+  .business-list {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+  }
+
+  .btn,
+  .auth-toggle button,
+  .business-card,
+  .check-row {
+    min-height: 44px;
+  }
+
+  .form,
+  .field,
+  .btn-row {
+    width: 100%;
+  }
+
+  .field input,
+  .field select,
+  .field textarea,
+  .btn-row .btn,
+  .form .btn {
+    width: 100%;
+  }
+
+  .btn-row {
+    display: grid;
+    gap: 8px;
+  }
+
+  .drawer {
+    inset: auto 0 0;
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    grid-template-rows: auto 1fr;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+  }
+
+  .drawer.open {
+    transform: translateY(0);
+  }
+
+  .drawer-header,
+  .drawer-body {
+    padding: 16px;
+  }
+
+  .drawer-body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .table-wrap {
+    overflow: visible;
+  }
+
+  .table,
+  .table thead,
+  .table tbody,
+  .table tr,
+  .table th,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .table tr {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow);
+    padding: 12px;
+  }
+
+  .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 0;
+    padding: 8px 0;
+  }
+
+  .table td::before {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .table td:nth-child(1)::before {
+    content: "Name";
+  }
+
+  .table td:nth-child(2)::before {
+    content: "Phone";
+  }
+
+  .table td:nth-child(3)::before {
+    content: "Status";
+  }
+
+  .table td:nth-child(4)::before {
+    content: "Expiry";
+  }
+
+  .table td:nth-child(5)::before,
+  .table td:nth-child(6)::before,
+  .table td:nth-child(7)::before {
+    content: "";
+  }
+
+  .table td:nth-child(8)::before {
+    content: "";
+  }
+
+  #customersTable .table td:nth-child(3),
+  #customersTable .table td:nth-child(4),
+  #customersTable .table td:nth-child(6) {
+    display: none;
+  }
+
+  #customersTable .table td:nth-child(5)::before {
+    content: "Status";
+  }
+
+  #customersTable .table td:nth-child(7)::before {
+    content: "Expiry";
+  }
+
+  #customersTable .table td:nth-child(8)::before {
+    content: "";
+  }
+
+  #recentTable .table td:nth-child(3)::before {
+    content: "Status";
+  }
+
+  #recentTable .table td:nth-child(4)::before {
+    content: "Added";
+  }
+
+  #expiringTable .table td:nth-child(3)::before {
+    content: "Plan";
+  }
+
+  #expiringTable .table td:nth-child(4)::before {
+    content: "Expiry";
+  }
+
+  #expiringTable .table td:nth-child(5)::before {
+    content: "";
+  }
+
+  .row-actions {
+    display: grid;
+    width: 100%;
+    gap: 8px;
+    opacity: 1;
+  }
+
+  .row-actions .btn,
+  .table .btn-whatsapp {
+    width: 100%;
+  }
+
+  .confirm-inline.open {
+    display: grid;
+    gap: 8px;
+  }
+
+  .customer-list {
+    max-height: none;
+  }
+
+  .check-row {
+    grid-template-columns: auto 1fr;
+  }
+
+  .check-row .badge {
+    grid-column: 2;
+    width: max-content;
+  }
+
+  .toast-region {
+    right: 16px;
+    bottom: 92px;
+    left: 16px;
+  }
+
+  .toast {
+    width: 100%;
   }
 }

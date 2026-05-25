@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cindy | Businesses</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <main class="main">
+        <section class="topbar">
+          <div>
+            <h1 class="page-title">Businesses</h1>
+            <p class="page-subtitle">Manage the workspaces connected to your owner account.</p>
+          </div>
+          <button class="btn btn-primary" id="openBusinessDrawer" type="button"><i data-lucide="plus" class="icon"></i>Add business</button>
+        </section>
+
+        <section class="grid business-list" id="businessesGrid"></section>
+      </main>
+    </div>
+
+    <div class="drawer-backdrop" id="businessBackdrop"></div>
+    <aside class="drawer" id="businessDrawer" aria-label="Business panel">
+      <div class="drawer-header">
+        <div>
+          <h2 class="card-title" id="businessDrawerTitle" style="margin: 0;">Add business</h2>
+          <div class="muted">Create or edit a workspace.</div>
+        </div>
+        <button class="btn btn-ghost" type="button" data-close-drawer aria-label="Close"><i data-lucide="x" class="icon"></i></button>
+      </div>
+      <div class="drawer-body">
+        <form class="form" id="businessForm" method="post">
+          <input type="hidden" name="id" id="businessId">
+          <div class="field">
+            <label for="businessName">Business name</label>
+            <input id="businessName" name="name" type="text" required>
+          </div>
+          <div class="field">
+            <label for="businessType">Business type</label>
+            <select id="businessType" name="type" required>
+              <option value="gym">Gym</option>
+              <option value="cafe">Cafe</option>
+              <option value="bakery">Bakery</option>
+              <option value="salon">Salon</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-message" aria-live="polite"></div>
+          <button class="btn btn-primary" type="submit">Save business</button>
+        </form>
+      </div>
+    </aside>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script type="module">
+      import { Cindy } from './assets/app.js';
+
+      let businesses = [];
+      const drawer = Cindy.bindDrawer('#openBusinessDrawer', '#businessDrawer', '#businessBackdrop');
+
+      if (!Cindy.redirectOnMissingAuth()) {
+        await loadBusinesses();
+        Cindy.layout('businesses');
+      }
+
+      document.querySelector('#openBusinessDrawer').addEventListener('click', () => {
+        document.querySelector('#businessDrawerTitle').textContent = 'Add business';
+        document.querySelector('#businessForm').reset();
+        document.querySelector('#businessId').value = '';
+        document.querySelector('#businessType').value = 'gym';
+      });
+
+      Cindy.withSubmit(document.querySelector('#businessForm'), async (data, form) => {
+        const body = Object.fromEntries(data);
+        const id = body.id;
+        delete body.id;
+        const payload = await Cindy.api(id ? `/business/${encodeURIComponent(id)}` : '/business', {
+          method: id ? 'PUT' : 'POST',
+          body: JSON.stringify(body)
+        });
+        const saved = pickBusiness(payload);
+        businesses = await refreshBusinesses(saved);
+        if (!Cindy.selectedBusinessId() && saved?.id) {
+          Cindy.setSelectedBusinessId(saved.id);
+        }
+        Cindy.setBusinesses(businesses);
+        form.reset();
+        drawer.close();
+        renderBusinesses();
+        Cindy.toast(id ? 'Business updated.' : 'Business created.');
+      });
+
+      async function loadBusinesses() {
+        try {
+          businesses = await Cindy.loadBusinesses();
+          renderBusinesses();
+        } catch (error) {
+          document.querySelector('#businessesGrid').innerHTML = empty('wifi-off', 'Could not load businesses. Check the API server and try again.');
+          Cindy.toast(error.message);
+        } finally {
+          Cindy.hydrateIcons();
+        }
+      }
+
+      function renderBusinesses() {
+        const target = document.querySelector('#businessesGrid');
+        if (!businesses.length) {
+          target.innerHTML = `<section class="card">${empty('building-2', 'Create your first business workspace to begin.')}</section>`;
+          Cindy.hydrateIcons();
+          return;
+        }
+        target.innerHTML = businesses.map((business) => {
+          const id = String(business.id);
+          const isActive = String(Cindy.selectedBusinessId()) === id;
+          return `
+            <article class="business-card business-manage-card ${isActive ? 'active' : ''}" data-id="${Cindy.escapeHtml(id)}">
+              <div class="business-card-head">
+                <i data-lucide="${iconForType(business.type)}" class="icon"></i>
+                ${isActive ? '<span class="badge badge-active">Active</span>' : ''}
+              </div>
+              <div>
+                <strong>${Cindy.escapeHtml(business.name || 'Untitled business')}</strong>
+                <small>${Cindy.escapeHtml(business.type || 'Business')}</small>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-secondary" type="button" data-edit="${Cindy.escapeHtml(id)}"><i data-lucide="pencil" class="icon"></i>Edit</button>
+                <button class="btn btn-primary" type="button" data-switch="${Cindy.escapeHtml(id)}" ${isActive ? 'disabled' : ''}>${isActive ? 'Current' : 'Switch'}</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+        bindBusinessActions();
+        Cindy.hydrateIcons();
+      }
+
+      function bindBusinessActions() {
+        document.querySelectorAll('[data-edit]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const business = businesses.find((item) => String(item.id) === String(button.dataset.edit));
+            if (!business) return;
+            document.querySelector('#businessDrawerTitle').textContent = 'Edit business';
+            document.querySelector('#businessId').value = business.id;
+            document.querySelector('#businessName').value = business.name || '';
+            document.querySelector('#businessType').value = business.type || 'other';
+            document.querySelector('#businessDrawer').classList.add('open');
+            document.querySelector('#businessBackdrop').classList.add('open');
+          });
+        });
+        document.querySelectorAll('[data-switch]').forEach((button) => {
+          button.addEventListener('click', () => {
+            Cindy.setSelectedBusinessId(button.dataset.switch);
+            window.location.href = 'dashboard.html';
+          });
+        });
+      }
+
+      async function refreshBusinesses(saved) {
+        const loaded = await Cindy.loadBusinesses().catch(() => []);
+        if (loaded.length) return loaded;
+        if (!saved?.id) return businesses;
+        const exists = businesses.some((business) => String(business.id) === String(saved.id));
+        return exists
+          ? businesses.map((business) => String(business.id) === String(saved.id) ? { ...business, ...saved } : business)
+          : [saved, ...businesses];
+      }
+
+      function pickBusiness(payload) {
+        return payload?.business || payload?.data || payload || {};
+      }
+
+      function empty(icon, message) {
+        return `<div class="empty-state"><span class="empty-icon"><i data-lucide="${icon}" class="icon"></i></span><span>${message}</span></div>`;
+      }
+
+      function iconForType(type) {
+        const normalized = String(type || '').toLowerCase();
+        if (normalized.includes('gym')) return 'dumbbell';
+        if (normalized.includes('cafe')) return 'coffee';
+        if (normalized.includes('bakery')) return 'croissant';
+        if (normalized.includes('salon')) return 'scissors';
+        return 'store';
+      }
+    </script>
+  </body>
+</html>

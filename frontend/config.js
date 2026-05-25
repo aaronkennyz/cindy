@@ -1,1 +1,3 @@
-export const API_BASE = 'http://localhost:4040/api';
+
+const API_BASE = 'https://your-render-url.onrender.com/api'
+export default API_BASE

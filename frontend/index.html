@@ -22,7 +22,7 @@
         <button type="button" data-auth-tab="register">Register</button>
       </div>
 
-      <form class="form" id="loginForm" autocomplete="on">
+      <form class="form" id="loginForm" method="post" autocomplete="on">
         <div class="field">
           <label for="loginIdentifier">Email or phone</label>
           <input id="loginIdentifier" name="identifier" type="text" autocomplete="username" required>
@@ -35,7 +35,7 @@
         <button class="btn btn-primary" type="submit">Login</button>
       </form>
 
-      <form class="form" id="registerForm" autocomplete="on" hidden>
+      <form class="form" id="registerForm" method="post" autocomplete="on" hidden>
         <div class="field">
           <label for="registerName">Name</label>
           <input id="registerName" name="name" type="text" autocomplete="name" required>

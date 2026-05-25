@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cindy | Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <main class="main">
+        <section class="topbar">
+          <div>
+            <h1 class="page-title">Profile</h1>
+            <p class="page-subtitle">Keep your owner account details current.</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Theme</h2>
+          <div class="theme-options" aria-label="Theme">
+            <button class="theme-option" type="button" data-theme-option="default">
+              <strong>Default</strong>
+              <span>Purple accent</span>
+            </button>
+            <button class="theme-option" type="button" data-theme-option="youtube">
+              <strong>YouTube</strong>
+              <span>Red accent</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="card">
+          <form class="form" id="profileForm" method="post">
+            <div class="grid two-column">
+              <div class="field">
+                <label for="profileName">Name</label>
+                <input id="profileName" name="name" type="text" autocomplete="name" required>
+              </div>
+              <div class="field">
+                <label for="profileEmail">Email</label>
+                <input id="profileEmail" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="profilePhone">Phone</label>
+                <input id="profilePhone" name="phone" type="tel" autocomplete="tel" required>
+              </div>
+              <div class="field">
+                <label for="profilePassword">New password</label>
+                <input id="profilePassword" name="password" type="password" autocomplete="new-password" minlength="6">
+              </div>
+            </div>
+            <div class="form-message" aria-live="polite"></div>
+            <div class="btn-row" style="justify-content: flex-end;">
+              <button class="btn btn-primary" type="submit">Save changes</button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script type="module">
+      import { Cindy } from './assets/app.js';
+
+      if (await Cindy.requireWorkspace('profile')) {
+        Cindy.layout('profile');
+        bindThemeOptions();
+        loadProfile();
+      }
+
+      Cindy.withSubmit(document.querySelector('#profileForm'), async (data) => {
+        const body = Object.fromEntries(data);
+        if (!String(body.password || '').trim()) {
+          delete body.password;
+        }
+        const payload = await Cindy.api('/auth/profile', {
+          method: 'PUT',
+          body: JSON.stringify(body)
+        });
+        const profile = pickProfile(payload);
+        fillProfile(profile);
+        Cindy.setCurrentUser(profile);
+        updateOwnerLabel(profile);
+        document.querySelector('#profilePassword').value = '';
+        const message = document.querySelector('#profileForm .form-message');
+        message.textContent = 'Profile updated.';
+        message.classList.add('success');
+      });
+
+      async function loadProfile() {
+        try {
+          const payload = await Cindy.api('/auth/profile');
+          const profile = pickProfile(payload);
+          fillProfile(profile);
+          Cindy.setCurrentUser(profile);
+          updateOwnerLabel(profile);
+        } catch (error) {
+          Cindy.toast(error.message);
+        }
+      }
+
+      function fillProfile(profile) {
+        document.querySelector('#profileName').value = profile.name || '';
+        document.querySelector('#profileEmail').value = profile.email || '';
+        document.querySelector('#profilePhone').value = profile.phone || '';
+      }
+
+      function pickProfile(payload) {
+        const profile = payload?.user || payload?.profile || payload?.data || payload;
+        return hasProfileFields(profile) ? profile : Cindy.currentUser() || {};
+      }
+
+      function hasProfileFields(profile) {
+        return Boolean(profile && (profile.name || profile.email || profile.phone));
+      }
+
+      function updateOwnerLabel(profile) {
+        const ownerLabel = document.querySelector('.owner-name');
+        if (ownerLabel) {
+          ownerLabel.textContent = profile.name || profile.email || 'Owner';
+        }
+      }
+
+      function bindThemeOptions() {
+        renderThemeOptions();
+        document.querySelectorAll('[data-theme-option]').forEach((button) => {
+          button.addEventListener('click', () => {
+            Cindy.setTheme(button.dataset.themeOption);
+            renderThemeOptions();
+          });
+        });
+      }
+
+      function renderThemeOptions() {
+        document.querySelectorAll('[data-theme-option]').forEach((button) => {
+          button.classList.toggle('active', button.dataset.themeOption === Cindy.currentTheme());
+        });
+      }
+    </script>
+  </body>
+</html>
