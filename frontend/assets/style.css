@@ -1,22 +1,40 @@
 :root {
-  --bg-base: #0f0f0f;
-  --bg-surface: #1a1a1a;
-  --bg-elevated: #222222;
-  --bg-sidebar: #141414;
-  --border: #2e2e2e;
-  --accent: #6c63ff;
-  --accent-hover: #574fd6;
-  --accent-soft: rgba(108, 99, 255, 0.12);
-  --text-primary: #f0f0f0;
-  --text-secondary: #888888;
-  --text-muted: #555555;
+  --bg-base: #ffffff;
+  --bg-surface: #f8f8f8;
+  --bg-elevated: #f0f0f0;
+  --bg-sidebar: #ffffff;
+  --border: #e0e0e0;
+  --accent: #c41e3a;
+  --accent-hover: #a01729;
+  --accent-soft: rgba(196, 30, 58, 0.12);
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #ef4444;
   --whatsapp: #25d366;
   --white: #ffffff;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  color-scheme: dark;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-base: #0f0f0f;
+    --bg-surface: #1a1a1a;
+    --bg-elevated: #222222;
+    --bg-sidebar: #141414;
+    --border: #2e2e2e;
+    --accent: #c41e3a;
+    --accent-hover: #a01729;
+    --accent-soft: rgba(196, 30, 58, 0.12);
+    --text-primary: #f0f0f0;
+    --text-secondary: #888888;
+    --text-muted: #555555;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -31,35 +49,37 @@ body {
   font-family: Inter, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body.theme-default {
-  --bg-base: #0f0f0f;
-  --bg-surface: #1a1a1a;
-  --bg-elevated: #222222;
-  --border: #2e2e2e;
-  --accent: #6c63ff;
-  --accent-hover: #574fd6;
-  --accent-soft: rgba(108, 99, 255, 0.12);
-  --text-primary: #f0f0f0;
-  --text-secondary: #888888;
-  --text-muted: #555555;
+  --bg-base: #ffffff;
+  --bg-surface: #f8f8f8;
+  --bg-elevated: #f0f0f0;
+  --border: #e0e0e0;
+  --accent: #c41e3a;
+  --accent-hover: #a01729;
+  --accent-soft: rgba(196, 30, 58, 0.12);
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #ef4444;
 }
 
-body.theme-youtube {
+body.theme-dark {
   --bg-base: #0f0f0f;
   --bg-surface: #1a1a1a;
-  --bg-elevated: #272727;
-  --border: #303030;
-  --accent: #ff0000;
-  --accent-hover: #cc0000;
-  --accent-soft: rgba(255, 0, 0, 0.12);
-  --text-primary: #f1f1f1;
-  --text-secondary: #aaaaaa;
-  --text-muted: #606060;
+  --bg-elevated: #222222;
+  --border: #2e2e2e;
+  --accent: #c41e3a;
+  --accent-hover: #a01729;
+  --accent-soft: rgba(196, 30, 58, 0.12);
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
   --success: #2ba640;
   --warning: #f59e0b;
   --danger: #ff4444;
@@ -143,6 +163,7 @@ button {
   border-right: 1px solid var(--border);
   background: var(--bg-sidebar);
   padding: 24px 16px;
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
 .nav {
@@ -176,6 +197,39 @@ button {
   gap: 12px;
   border-top: 1px solid var(--border);
   padding-top: 16px;
+}
+
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 200ms ease;
+  font-size: 20px;
+}
+
+.dark-mode-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+@media (prefers-color-scheme: light) {
+  .dark-mode-toggle::before {
+    content: "🌙";
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .dark-mode-toggle::before {
+    content: "☀️";
+  }
 }
 
 .workspace-switcher {
@@ -241,6 +295,7 @@ button {
   background: var(--bg-surface);
   box-shadow: var(--shadow);
   padding: 24px;
+  transition: all 200ms ease;
 }
 
 .card-title {
@@ -315,7 +370,7 @@ button {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  outline: 2px solid rgba(108, 99, 255, 0.35);
+  outline: 2px solid rgba(196, 30, 58, 0.35);
   outline-offset: 2px;
 }
 
@@ -852,6 +907,7 @@ button {
     background: var(--bg-sidebar);
     font-size: 18px;
     padding: 0 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .sidebar .wordmark-mark {
@@ -872,7 +928,8 @@ button {
     border-bottom: 1px solid var(--border);
     background: var(--bg-sidebar);
     margin: 0;
-    padding: 0 16px 0 8px;
+    padding: 0 12px 0 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .sidebar .workspace-switcher label,
@@ -888,6 +945,7 @@ button {
     background: var(--bg-base);
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: 13px;
   }
 
   .nav {
@@ -904,6 +962,7 @@ button {
     background: var(--bg-sidebar);
     margin: 0;
     padding: 6px 6px max(6px, env(safe-area-inset-bottom));
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
   }
 
   .nav-item {
@@ -934,7 +993,7 @@ button {
   }
 
   .main {
-    gap: 24px;
+    gap: 20px;
     padding: 16px;
   }
 
@@ -952,6 +1011,7 @@ button {
   .auth-card,
   .setup-card {
     padding: 16px;
+    border-radius: 12px;
   }
 
   .grid,
@@ -986,6 +1046,8 @@ button {
   .btn-row .btn,
   .form .btn {
     width: 100%;
+    font-size: 16px;
+    padding: 12px;
   }
 
   .btn-row {
@@ -1146,6 +1208,7 @@ button {
   .row-actions .btn,
   .table .btn-whatsapp {
     width: 100%;
+    font-size: 14px;
   }
 
   .confirm-inline.open {
@@ -1159,6 +1222,8 @@ button {
 
   .check-row {
     grid-template-columns: auto 1fr;
+    gap: 12px;
+    padding: 12px 0;
   }
 
   .check-row .badge {
@@ -1170,9 +1235,11 @@ button {
     right: 16px;
     bottom: 92px;
     left: 16px;
+    width: calc(100vw - 32px);
   }
 
   .toast {
     width: 100%;
+    font-size: 14px;
   }
 }
