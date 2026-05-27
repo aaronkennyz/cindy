@@ -10,13 +10,17 @@
     <link rel="stylesheet" href="assets/style.css">
     <script>
       (function() {
-        const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
-        if (isDark) {
-          document.documentElement.style.colorScheme = 'dark';
-          document.body?.classList.add('theme-dark');
+        function applySavedColorMode() {
+          const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
+          document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+          document.body.classList.toggle('theme-dark', isDark);
+          document.body.classList.toggle('theme-default', !isDark);
+        }
+
+        if (document.body) {
+          applySavedColorMode();
         } else {
-          document.documentElement.style.colorScheme = 'light';
-          document.body?.classList.add('theme-default');
+          document.addEventListener('DOMContentLoaded', applySavedColorMode, { once: true });
         }
       })();
     </script>
@@ -32,10 +36,18 @@
         </section>
 
         <section class="card">
-          <h2 class="card-title">Appearance</h2>
-          <div style="display: flex; align-items: center; gap: 12px; color: var(--text-secondary); font-weight: 500;">
-            <button class="dark-mode-toggle" type="button" id="darkModeToggle" aria-label="Toggle dark mode"></button>
-            <label for="darkModeToggle" style="cursor: pointer;"><span id="darkModeLabel">Light mode</span></label>
+          <h2 class="card-title">Theme</h2>
+          <div class="theme-options" aria-label="Theme">
+            <button class="theme-option" type="button" data-theme-mode="light">
+              <span class="theme-swatch theme-swatch-light-red" aria-hidden="true"></span>
+              <strong>Light Red</strong>
+              <span>Cherry red with a white background</span>
+            </button>
+            <button class="theme-option" type="button" data-theme-mode="dark">
+              <span class="theme-swatch theme-swatch-dark-purple" aria-hidden="true"></span>
+              <strong>Dark Purple</strong>
+              <span>Purple accent in dark mode</span>
+            </button>
           </div>
         </section>
 
@@ -75,7 +87,7 @@
       if (await Cindy.requireWorkspace('profile')) {
         Cindy.layout('profile');
         loadProfile();
-        initDarkMode();
+        initThemeChoices();
       }
 
       Cindy.withSubmit(document.querySelector('#profileForm'), async (data) => {
@@ -131,40 +143,43 @@
         }
       }
 
-      // Dark mode toggle
-      function initDarkMode() {
-        const toggle = document.querySelector('#darkModeToggle');
-        const label = document.querySelector('#darkModeLabel');
-        if (!toggle) return;
+      function initThemeChoices() {
+        const buttons = document.querySelectorAll('[data-theme-mode]');
+        if (!buttons.length) return;
 
         function isDarkMode() {
           return localStorage.getItem('cindy-dark-mode') === 'true';
         }
 
-        function applyTheme(dark) {
-          if (dark) {
-            document.body.classList.add('theme-dark');
-            document.body.classList.remove('theme-default');
-            label.textContent = 'Dark mode';
-          } else {
-            document.body.classList.add('theme-default');
-            document.body.classList.remove('theme-dark');
-            label.textContent = 'Light mode';
-          }
-          localStorage.setItem('cindy-dark-mode', dark);
+        function renderThemeChoices() {
+          const dark = isDarkMode();
+          const activeMode = dark ? 'dark' : 'light';
+          buttons.forEach((button) => {
+            const active = button.dataset.themeMode === activeMode;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-pressed', String(active));
+          });
+          document.querySelectorAll('#globalDarkLabel').forEach((label) => {
+            label.textContent = dark ? 'Dark Purple' : 'Light Red';
+          });
         }
 
-        // Apply saved preference on load
-        if (isDarkMode()) {
-          label.textContent = 'Dark mode';
-        } else {
-          label.textContent = 'Light mode';
+        function applyTheme(mode) {
+          const dark = mode === 'dark';
+          Cindy.setTheme(dark ? 'dark' : 'default');
+          renderThemeChoices();
         }
 
-        toggle.addEventListener('click', (e) => {
-          e.preventDefault();
-          applyTheme(!isDarkMode());
+        buttons.forEach((button) => {
+          button.addEventListener('click', () => {
+            applyTheme(button.dataset.themeMode);
+          });
         });
+        document.querySelector('#globalDarkToggle')?.addEventListener('click', () => {
+          window.setTimeout(renderThemeChoices, 0);
+        });
+
+        renderThemeChoices();
       }
     </script>
   </body>

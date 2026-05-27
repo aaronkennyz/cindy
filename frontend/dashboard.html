@@ -10,13 +10,17 @@
     <link rel="stylesheet" href="assets/style.css">
     <script>
       (function() {
-        const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
-        if (isDark) {
-          document.documentElement.style.colorScheme = 'dark';
-          document.body?.classList.add('theme-dark');
+        function applySavedColorMode() {
+          const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
+          document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+          document.body.classList.toggle('theme-dark', isDark);
+          document.body.classList.toggle('theme-default', !isDark);
+        }
+
+        if (document.body) {
+          applySavedColorMode();
         } else {
-          document.documentElement.style.colorScheme = 'light';
-          document.body?.classList.add('theme-default');
+          document.addEventListener('DOMContentLoaded', applySavedColorMode, { once: true });
         }
       })();
     </script>
@@ -83,7 +87,7 @@
         label.style.marginLeft = '12px';
         label.style.color = 'var(--text-secondary)';
         label.style.fontWeight = '500';
-        label.textContent = isDark ? 'Dark mode' : 'Light mode';
+        label.textContent = isDark ? 'Dark Purple' : 'Light Red';
         
         const container = document.createElement('div');
         container.style.display = 'flex';
@@ -99,10 +103,8 @@
         button.addEventListener('click', () => {
           const dark = localStorage.getItem('cindy-dark-mode') === 'true';
           const newDark = !dark;
-          localStorage.setItem('cindy-dark-mode', newDark);
-          document.body.classList.toggle('theme-dark');
-          document.body.classList.toggle('theme-default');
-          label.textContent = newDark ? 'Dark mode' : 'Light mode';
+          Cindy.setTheme(newDark ? 'dark' : 'default');
+          label.textContent = newDark ? 'Dark Purple' : 'Light Red';
         });
       }
 
