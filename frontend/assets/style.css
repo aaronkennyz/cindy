@@ -120,8 +120,13 @@ button {
 .auth-body {
   display: grid;
   min-height: 100vh;
+  background: #ffffff;
   place-items: center;
   padding: 24px;
+}
+
+.auth-card {
+  background: #ffffff;
 }
 
 .auth-card,
@@ -136,25 +141,6 @@ button {
 
 .setup-card {
   width: min(100%, 720px);
-}
-
-.wordmark {
-  display: inline-flex;
-  align-items: center;
-  width: max-content;
-}
-
-.brand-logo {
-  display: block;
-  width: 148px;
-  height: auto;
-}
-
-.login-logo {
-  display: block;
-  width: min(220px, 72%);
-  height: auto;
-  margin-bottom: 10px;
 }
 
 .muted {
@@ -802,7 +788,6 @@ button {
     padding: 8px;
   }
 
-  .sidebar .wordmark,
   .sidebar .workspace-switcher,
   .sidebar-footer {
     display: none;
@@ -885,26 +870,6 @@ button {
     border: 0;
     background: transparent;
     padding: 0;
-  }
-
-  .sidebar .wordmark {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 35;
-    display: inline-flex;
-    width: 50%;
-    height: 64px;
-    align-items: center;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-sidebar);
-    font-size: 18px;
-    padding: 0 16px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  }
-
-  .sidebar .brand-logo {
-    width: min(132px, 100%);
   }
 
   .sidebar .workspace-switcher {
