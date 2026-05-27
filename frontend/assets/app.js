@@ -2,37 +2,45 @@ import { API_BASE } from './config.js';
 
 export const Cindy = (() => {
   const authStateKey = 'cindy:auth';
-  const themeClasses = ['theme-default', 'theme-youtube'];
+  const themeClasses = ['theme-default', 'theme-dark'];
   const themes = {
     default: {
-      '--bg-base': '#0f0f0f',
-      '--bg-surface': '#1a1a1a',
-      '--bg-elevated': '#222222',
-      '--border': '#2e2e2e',
-      '--accent': '#6c63ff',
-      '--accent-hover': '#574fd6',
-      '--accent-soft': 'rgba(108, 99, 255, 0.12)',
-      '--text-primary': '#f0f0f0',
-      '--text-secondary': '#888888',
-      '--text-muted': '#555555',
+      '--bg-base': '#ffffff',
+      '--bg-surface': '#f8f8f8',
+      '--bg-elevated': '#f0f0f0',
+      '--bg-sidebar': '#ffffff',
+      '--border': '#e0e0e0',
+      '--accent': '#c41e3a',
+      '--accent-hover': '#a01729',
+      '--accent-soft': 'rgba(196, 30, 58, 0.12)',
+      '--focus-ring': 'rgba(196, 30, 58, 0.35)',
+      '--heading-color': '#c41e3a',
+      '--text-primary': '#1a1a1a',
+      '--text-secondary': '#666666',
+      '--text-muted': '#999999',
       '--success': '#22c55e',
       '--warning': '#f59e0b',
-      '--danger': '#ef4444'
+      '--danger': '#ef4444',
+      '--shadow': '0 1px 3px rgba(0, 0, 0, 0.1)'
     },
-    youtube: {
-      '--bg-base': '#0f0f0f',
-      '--bg-surface': '#1a1a1a',
-      '--bg-elevated': '#272727',
-      '--border': '#303030',
-      '--accent': '#ff0000',
-      '--accent-hover': '#cc0000',
-      '--accent-soft': 'rgba(255, 0, 0, 0.12)',
-      '--text-primary': '#f1f1f1',
-      '--text-secondary': '#aaaaaa',
-      '--text-muted': '#606060',
+    dark: {
+      '--bg-base': '#100a1f',
+      '--bg-surface': '#171025',
+      '--bg-elevated': '#211633',
+      '--bg-sidebar': '#140d24',
+      '--border': '#31224a',
+      '--accent': '#a855f7',
+      '--accent-hover': '#8b5cf6',
+      '--accent-soft': 'rgba(168, 85, 247, 0.16)',
+      '--focus-ring': 'rgba(168, 85, 247, 0.4)',
+      '--heading-color': '#c084fc',
+      '--text-primary': '#fbf8ff',
+      '--text-secondary': '#d8cbed',
+      '--text-muted': '#a99abf',
       '--success': '#2ba640',
       '--warning': '#f59e0b',
-      '--danger': '#ff4444'
+      '--danger': '#ff4444',
+      '--shadow': '0 1px 3px rgba(5, 2, 12, 0.45)'
     }
   };
   let authToken = null;
@@ -50,7 +58,7 @@ export const Cindy = (() => {
         currentUser = parsed.user || null;
         businesses = Array.isArray(parsed.businesses) ? parsed.businesses : [];
         selectedBusinessId = parsed.selectedBusinessId || null;
-        selectedTheme = themes[parsed.selectedTheme] ? parsed.selectedTheme : 'default';
+        selectedTheme = normalizeTheme(parsed.selectedTheme);
       }
     } catch {
       authToken = null;
@@ -78,14 +86,25 @@ export const Cindy = (() => {
     }) : '';
   }
 
-  function applyTheme(themeName = selectedTheme) {
-    selectedTheme = themes[themeName] ? themeName : 'default';
+  function normalizeTheme(themeName) {
+    if (themeName === 'dark' || themeName === 'theme-dark') return 'dark';
+    return 'default';
+  }
+
+  function themeFromPreference() {
+    return localStorage.getItem('cindy-dark-mode') === 'true' ? 'dark' : 'default';
+  }
+
+  function applyTheme(themeName = themeFromPreference()) {
+    selectedTheme = normalizeTheme(themeName);
     const values = themes[selectedTheme];
     Object.entries(values).forEach(([property, value]) => {
       document.documentElement.style.setProperty(property, value);
     });
+    document.documentElement.style.colorScheme = selectedTheme === 'dark' ? 'dark' : 'light';
     document.body?.classList.remove(...themeClasses);
     document.body?.classList.add(`theme-${selectedTheme}`);
+    localStorage.setItem('cindy-dark-mode', String(selectedTheme === 'dark'));
   }
 
   function setTheme(themeName) {
@@ -355,6 +374,47 @@ export const Cindy = (() => {
       window.location.href = 'dashboard.html';
     });
     hydrateIcons();
+    // add global dark mode toggle to sidebar footer (keeps UI-wide control)
+    try {
+      const footer = document.querySelector('.sidebar-footer');
+      if (footer && !document.querySelector('#globalDarkToggle')) {
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.gap = '8px';
+        container.style.marginTop = '8px';
+        container.style.paddingTop = '8px';
+        container.style.borderTop = '1px solid var(--border)';
+
+        const btn = document.createElement('button');
+        btn.id = 'globalDarkToggle';
+        btn.className = 'dark-mode-toggle';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Toggle dark mode');
+
+        const lbl = document.createElement('span');
+        lbl.id = 'globalDarkLabel';
+        lbl.style.color = 'var(--text-secondary)';
+        lbl.style.fontWeight = '500';
+
+        container.appendChild(btn);
+        container.appendChild(lbl);
+        footer.appendChild(container);
+
+        // handler
+        const isDarkMode = () => themeFromPreference() === 'dark';
+        const apply = (dark) => {
+          applyTheme(dark ? 'dark' : 'default');
+          persistState();
+          const labelEl = document.querySelector('#globalDarkLabel');
+          if (labelEl) labelEl.textContent = dark ? 'Dark Purple' : 'Light Red';
+        };
+        apply(isDarkMode());
+        btn.addEventListener('click', () => apply(!isDarkMode()));
+      }
+    } catch (e) {
+      // non-fatal
+    }
   }
 
   function navItem(key, href, icon, label, active) {
