@@ -2,6 +2,7 @@ import { API_BASE } from './config.js';
 
 export const Cindy = (() => {
   const authStateKey = 'cindy:auth';
+  const themeStateKey = 'cindy-ui-theme';
   const themeClasses = ['theme-default', 'theme-dark'];
   const themes = {
     default: {
@@ -87,12 +88,12 @@ export const Cindy = (() => {
   }
 
   function normalizeTheme(themeName) {
-    if (themeName === 'dark' || themeName === 'theme-dark') return 'dark';
+    if (themeName === 'dark' || themeName === 'vamp-purple' || themeName === 'theme-dark') return 'dark';
     return 'default';
   }
 
   function themeFromPreference() {
-    return localStorage.getItem('cindy-dark-mode') === 'true' ? 'dark' : 'default';
+    return normalizeTheme(localStorage.getItem(themeStateKey));
   }
 
   function applyTheme(themeName = themeFromPreference()) {
@@ -104,7 +105,7 @@ export const Cindy = (() => {
     document.documentElement.style.colorScheme = selectedTheme === 'dark' ? 'dark' : 'light';
     document.body?.classList.remove(...themeClasses);
     document.body?.classList.add(`theme-${selectedTheme}`);
-    localStorage.setItem('cindy-dark-mode', String(selectedTheme === 'dark'));
+    localStorage.setItem(themeStateKey, selectedTheme === 'dark' ? 'vamp-purple' : 'light-red');
   }
 
   function setTheme(themeName) {
@@ -374,47 +375,6 @@ export const Cindy = (() => {
       window.location.href = 'dashboard.html';
     });
     hydrateIcons();
-    // add global dark mode toggle to sidebar footer (keeps UI-wide control)
-    try {
-      const footer = document.querySelector('.sidebar-footer');
-      if (footer && !document.querySelector('#globalDarkToggle')) {
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.gap = '8px';
-        container.style.marginTop = '8px';
-        container.style.paddingTop = '8px';
-        container.style.borderTop = '1px solid var(--border)';
-
-        const btn = document.createElement('button');
-        btn.id = 'globalDarkToggle';
-        btn.className = 'dark-mode-toggle';
-        btn.type = 'button';
-        btn.setAttribute('aria-label', 'Toggle dark mode');
-
-        const lbl = document.createElement('span');
-        lbl.id = 'globalDarkLabel';
-        lbl.style.color = 'var(--text-secondary)';
-        lbl.style.fontWeight = '500';
-
-        container.appendChild(btn);
-        container.appendChild(lbl);
-        footer.appendChild(container);
-
-        // handler
-        const isDarkMode = () => themeFromPreference() === 'dark';
-        const apply = (dark) => {
-          applyTheme(dark ? 'dark' : 'default');
-          persistState();
-          const labelEl = document.querySelector('#globalDarkLabel');
-          if (labelEl) labelEl.textContent = dark ? 'Dark Purple' : 'Light Red';
-        };
-        apply(isDarkMode());
-        btn.addEventListener('click', () => apply(!isDarkMode()));
-      }
-    } catch (e) {
-      // non-fatal
-    }
   }
 
   function navItem(key, href, icon, label, active) {
