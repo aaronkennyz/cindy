@@ -21,19 +21,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-base: #0f0f0f;
-    --bg-surface: #1a1a1a;
-    --bg-elevated: #222222;
-    --bg-sidebar: #141414;
-    --border: #2e2e2e;
+    --bg-base: #ffffff;
+    --bg-surface: #f8f8f8;
+    --bg-elevated: #f0f0f0;
+    --bg-sidebar: #ffffff;
+    --border: #e0e0e0;
     --accent: #c41e3a;
     --accent-hover: #a01729;
     --accent-soft: rgba(196, 30, 58, 0.12);
-    --text-primary: #f0f0f0;
-    --text-secondary: #888888;
-    --text-muted: #555555;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    color-scheme: dark;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color-scheme: light;
   }
 }
 
