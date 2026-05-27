@@ -141,20 +141,20 @@ button {
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: var(--heading-color);
-  font-size: 22px;
-  font-weight: 600;
+  width: max-content;
 }
 
-.wordmark-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--accent-soft);
-  color: var(--accent);
+.brand-logo {
+  display: block;
+  width: 148px;
+  height: auto;
+}
+
+.login-logo {
+  display: block;
+  width: min(220px, 72%);
+  height: auto;
+  margin-bottom: 10px;
 }
 
 .muted {
@@ -903,10 +903,8 @@ button {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
-  .sidebar .wordmark-mark {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+  .sidebar .brand-logo {
+    width: min(132px, 100%);
   }
 
   .sidebar .workspace-switcher {

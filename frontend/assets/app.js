@@ -333,8 +333,7 @@ export const Cindy = (() => {
     document.body.insertAdjacentHTML('afterbegin', `
       <aside class="sidebar">
         <a class="wordmark" href="dashboard.html" aria-label="Cindy dashboard">
-          <span class="wordmark-mark"><i data-lucide="sparkles" class="icon"></i></span>
-          <span>Cindy</span>
+          <img class="brand-logo" src="assets/logo.png" alt="">
         </a>
         ${businesses.length ? `
           <div class="workspace-switcher">
