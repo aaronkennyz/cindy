@@ -8,6 +8,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
+    <script>
+      (function() {
+        const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
+        if (isDark) {
+          document.documentElement.style.colorScheme = 'dark';
+          document.body?.classList.add('theme-dark');
+        } else {
+          document.documentElement.style.colorScheme = 'light';
+          document.body?.classList.add('theme-default');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div class="page-shell">
@@ -20,16 +32,10 @@
         </section>
 
         <section class="card">
-          <h2 class="card-title">Theme</h2>
-          <div class="theme-options" aria-label="Theme">
-            <button class="theme-option" type="button" data-theme-option="default">
-              <strong>Default</strong>
-              <span>Purple accent</span>
-            </button>
-            <button class="theme-option" type="button" data-theme-option="youtube">
-              <strong>YouTube</strong>
-              <span>Red accent</span>
-            </button>
+          <h2 class="card-title">Appearance</h2>
+          <div style="display: flex; align-items: center; gap: 12px; color: var(--text-secondary); font-weight: 500;">
+            <button class="dark-mode-toggle" type="button" id="darkModeToggle" aria-label="Toggle dark mode"></button>
+            <label for="darkModeToggle" style="cursor: pointer;"><span id="darkModeLabel">Light mode</span></label>
           </div>
         </section>
 
@@ -68,8 +74,8 @@
 
       if (await Cindy.requireWorkspace('profile')) {
         Cindy.layout('profile');
-        bindThemeOptions();
         loadProfile();
+        initDarkMode();
       }
 
       Cindy.withSubmit(document.querySelector('#profileForm'), async (data) => {
@@ -125,19 +131,39 @@
         }
       }
 
-      function bindThemeOptions() {
-        renderThemeOptions();
-        document.querySelectorAll('[data-theme-option]').forEach((button) => {
-          button.addEventListener('click', () => {
-            Cindy.setTheme(button.dataset.themeOption);
-            renderThemeOptions();
-          });
-        });
-      }
+      // Dark mode toggle
+      function initDarkMode() {
+        const toggle = document.querySelector('#darkModeToggle');
+        const label = document.querySelector('#darkModeLabel');
+        if (!toggle) return;
 
-      function renderThemeOptions() {
-        document.querySelectorAll('[data-theme-option]').forEach((button) => {
-          button.classList.toggle('active', button.dataset.themeOption === Cindy.currentTheme());
+        function isDarkMode() {
+          return localStorage.getItem('cindy-dark-mode') === 'true';
+        }
+
+        function applyTheme(dark) {
+          if (dark) {
+            document.body.classList.add('theme-dark');
+            document.body.classList.remove('theme-default');
+            label.textContent = 'Dark mode';
+          } else {
+            document.body.classList.add('theme-default');
+            document.body.classList.remove('theme-dark');
+            label.textContent = 'Light mode';
+          }
+          localStorage.setItem('cindy-dark-mode', dark);
+        }
+
+        // Apply saved preference on load
+        if (isDarkMode()) {
+          label.textContent = 'Dark mode';
+        } else {
+          label.textContent = 'Light mode';
+        }
+
+        toggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          applyTheme(!isDarkMode());
         });
       }
     </script>
