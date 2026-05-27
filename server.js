@@ -22,7 +22,8 @@ const limiter = rateLimit({
 app.use(cors({
   origin: [
     'http://localhost:4040',
-    'https://cindycrm.netlify.app'
+    'https://cindycrm.vercel.app'
+    
   ],
   credentials: true
 }))
