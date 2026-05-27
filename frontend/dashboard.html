@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cindy | Dashboard</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -11,7 +12,8 @@
     <script>
       (function() {
         function applySavedColorMode() {
-          const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
+          const themeMode = localStorage.getItem('cindy-ui-theme');
+          const isDark = themeMode === 'vamp-purple' || themeMode === 'dark';
           document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
           document.body.classList.toggle('theme-dark', isDark);
           document.body.classList.toggle('theme-default', !isDark);
@@ -63,7 +65,6 @@
 
       if (await Cindy.requireWorkspace('dashboard')) {
         Cindy.layout('dashboard');
-        setupDarkModeToggle();
         loadDashboard();
       }
 
@@ -72,41 +73,6 @@
         expiringVisible += 20;
         renderExpiring(expiringCustomers);
       });
-
-      function setupDarkModeToggle() {
-        const footer = document.querySelector('.sidebar-footer');
-        if (!footer) return;
-        
-        const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
-        const button = document.createElement('button');
-        button.className = 'dark-mode-toggle';
-        button.setAttribute('aria-label', 'Toggle dark mode');
-        button.style.alignSelf = 'center';
-        
-        const label = document.createElement('span');
-        label.style.marginLeft = '12px';
-        label.style.color = 'var(--text-secondary)';
-        label.style.fontWeight = '500';
-        label.textContent = isDark ? 'Dark Purple' : 'Light Red';
-        
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.gap = '8px';
-        container.style.marginTop = '12px';
-        container.style.paddingTop = '12px';
-        container.style.borderTop = '1px solid var(--border)';
-        container.appendChild(button);
-        container.appendChild(label);
-        footer.appendChild(container);
-        
-        button.addEventListener('click', () => {
-          const dark = localStorage.getItem('cindy-dark-mode') === 'true';
-          const newDark = !dark;
-          Cindy.setTheme(newDark ? 'dark' : 'default');
-          label.textContent = newDark ? 'Dark Purple' : 'Light Red';
-        });
-      }
 
       async function loadDashboard() {
         const refreshButton = document.querySelector('#refreshDashboard');

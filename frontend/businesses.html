@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cindy | Businesses</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -11,7 +12,8 @@
     <script>
       (function() {
         function applySavedColorMode() {
-          const isDark = localStorage.getItem('cindy-dark-mode') === 'true';
+          const themeMode = localStorage.getItem('cindy-ui-theme');
+          const isDark = themeMode === 'vamp-purple' || themeMode === 'dark';
           document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
           document.body.classList.toggle('theme-dark', isDark);
           document.body.classList.toggle('theme-default', !isDark);
