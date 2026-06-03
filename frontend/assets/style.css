@@ -198,6 +198,31 @@ button {
   flex: 0 0 36px;
 }
 
+.brand-lockup {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  color: var(--accent);
+  text-align: center;
+}
+
+.brand-lockup img {
+  width: 48px;
+  height: 48px;
+}
+
+.brand-lockup span {
+  color: var(--accent);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mobile-workspace-pill {
+  display: none;
+}
+
 .nav {
   display: grid;
   gap: 8px;
@@ -1242,5 +1267,26 @@ body.theme-dark .badge-warning {
   .toast {
     width: 100%;
     font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar .workspace-switcher {
+    display: none !important;
+  }
+
+  .mobile-workspace-pill {
+    display: inline-flex;
+    width: max-content;
+    align-items: center;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-top: 8px;
+    padding: 2px 10px;
+    text-transform: uppercase;
   }
 }
