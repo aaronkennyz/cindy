@@ -209,6 +209,7 @@ export const Cindy = (() => {
       selectedBusinessId = businesses.length === 1 ? businesses[0].id : null;
     }
     persistState();
+    updateWorkspacePills();
   }
 
   function setCurrentUser(user) {
@@ -219,10 +220,19 @@ export const Cindy = (() => {
   function setSelectedBusinessId(id) {
     selectedBusinessId = id || null;
     persistState();
+    updateWorkspacePills();
   }
 
   function selectedBusiness() {
     return businesses.find((business) => String(business.id) === String(selectedBusinessId)) || null;
+  }
+
+  function updateWorkspacePills() {
+    const business = selectedBusiness();
+    const name = business?.name || 'Workspace';
+    document.querySelectorAll('.mobile-workspace-pill').forEach((pill) => {
+      pill.textContent = name;
+    });
   }
 
   async function routeAfterBusinessCheck() {
@@ -384,6 +394,7 @@ export const Cindy = (() => {
       setSelectedBusinessId(event.target.value);
       window.location.href = 'dashboard.html';
     });
+    updateWorkspacePills();
     hydrateIcons();
   }
 
