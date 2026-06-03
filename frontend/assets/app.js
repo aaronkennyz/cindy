@@ -11,11 +11,15 @@ export const Cindy = (() => {
       '--bg-elevated': '#f0f0f0',
       '--bg-sidebar': '#ffffff',
       '--border': '#e0e0e0',
-      '--accent': '#c41e3a',
-      '--accent-hover': '#a01729',
-      '--accent-soft': 'rgba(196, 30, 58, 0.12)',
-      '--focus-ring': 'rgba(196, 30, 58, 0.35)',
-      '--heading-color': '#c41e3a',
+      '--accent': '#e60000',
+      '--accent-hover': '#cc0000',
+      '--accent-soft': 'rgba(230, 0, 0, 0.12)',
+      '--focus-ring': 'rgba(230, 0, 0, 0.35)',
+      '--heading-color': '#e60000',
+      '--nav-active-bg': 'var(--accent-soft)',
+      '--input-bg': 'var(--bg-sidebar)',
+      '--input-border': 'var(--border)',
+      '--table-header-bg': 'transparent',
       '--text-primary': '#1a1a1a',
       '--text-secondary': '#666666',
       '--text-muted': '#999999',
@@ -25,19 +29,23 @@ export const Cindy = (() => {
       '--shadow': '0 1px 3px rgba(0, 0, 0, 0.1)'
     },
     dark: {
-      '--bg-base': '#100a1f',
-      '--bg-surface': '#171025',
-      '--bg-elevated': '#211633',
-      '--bg-sidebar': '#140d24',
-      '--border': '#31224a',
-      '--accent': '#a855f7',
-      '--accent-hover': '#8b5cf6',
-      '--accent-soft': 'rgba(168, 85, 247, 0.16)',
-      '--focus-ring': 'rgba(168, 85, 247, 0.4)',
-      '--heading-color': '#c084fc',
-      '--text-primary': '#fbf8ff',
-      '--text-secondary': '#d8cbed',
-      '--text-muted': '#a99abf',
+      '--bg-base': '#1a1727',
+      '--bg-surface': '#221f30',
+      '--bg-elevated': '#221f30',
+      '--bg-sidebar': '#12101a',
+      '--border': '#2e2b3e',
+      '--accent': '#8b5cf6',
+      '--accent-hover': '#7c3aed',
+      '--accent-soft': 'rgba(139, 92, 246, 0.16)',
+      '--focus-ring': 'rgba(139, 92, 246, 0.4)',
+      '--heading-color': '#8b5cf6',
+      '--nav-active-bg': '#2e2a42',
+      '--input-bg': '#1e1b2e',
+      '--input-border': '#3a3550',
+      '--table-header-bg': '#1e1b2e',
+      '--text-primary': '#f0eeff',
+      '--text-secondary': '#a89fc0',
+      '--text-muted': '#a89fc0',
       '--success': '#2ba640',
       '--warning': '#f59e0b',
       '--danger': '#ff4444',
@@ -88,7 +96,7 @@ export const Cindy = (() => {
   }
 
   function normalizeTheme(themeName) {
-    if (themeName === 'dark' || themeName === 'vamp-purple' || themeName === 'theme-dark') return 'dark';
+    if (themeName === 'dark' || themeName === 'theme-dark') return 'dark';
     return 'default';
   }
 
@@ -105,7 +113,7 @@ export const Cindy = (() => {
     document.documentElement.style.colorScheme = selectedTheme === 'dark' ? 'dark' : 'light';
     document.body?.classList.remove(...themeClasses);
     document.body?.classList.add(`theme-${selectedTheme}`);
-    localStorage.setItem(themeStateKey, selectedTheme === 'dark' ? 'vamp-purple' : 'light-red');
+    localStorage.setItem(themeStateKey, selectedTheme === 'dark' ? 'dark' : 'light');
   }
 
   function setTheme(themeName) {
@@ -332,6 +340,12 @@ export const Cindy = (() => {
     const currentBusiness = selectedBusiness();
     document.body.insertAdjacentHTML('afterbegin', `
       <aside class="sidebar">
+        <div class="sidebar-brand" aria-label="Cindy">
+          <svg class="sidebar-logo" viewBox="0 0 36 36" role="img" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+            <path fill="var(--accent)" d="M9 31h22v-4.2c0-2.6-1.5-4.9-3.9-6l-5.2-2.4 2.8-4.2c1.1-1.7.8-3.9-.7-5.3L18.5 4 12 7.2v4.7l3.8 1.7-2.1 3.2-4.1 1.4C7.4 19 6 21.1 6 23.5V27h3v4Zm7.8-18.6-2.4-1.1V9.1l3.7-1.8 3.7 3.3c.6.5.7 1.4.3 2.1l-4.1 6.2 8.2 3.8c1.4.7 2.3 2 2.3 3.6V28H11.1v-4.5c0-1 .6-1.9 1.6-2.2l5.4-1.9 4.5-6.8-5.8-.2Z"/>
+          </svg>
+          <span>Cindy</span>
+        </div>
         ${businesses.length ? `
           <div class="workspace-switcher">
             <label for="workspaceSwitch">Workspace</label>

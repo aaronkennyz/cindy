@@ -4,8 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cindy | Profile</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="favicon.png" type="image/png">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -14,7 +13,7 @@
       (function() {
         function applySavedColorMode() {
           const themeMode = localStorage.getItem('cindy-ui-theme');
-          const isDark = themeMode === 'vamp-purple' || themeMode === 'dark';
+          const isDark = themeMode === 'dark';
           document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
           document.body.classList.toggle('theme-dark', isDark);
           document.body.classList.toggle('theme-default', !isDark);
@@ -42,10 +41,10 @@
           <h2 class="card-title">Theme</h2>
           <div class="theme-options" aria-label="Theme">
             <button class="theme-option" type="button" data-theme-mode="light">
-              <strong>Light red</strong>
+              <strong>Light</strong>
             </button>
             <button class="theme-option" type="button" data-theme-mode="dark">
-              <strong>Vamp purple</strong>
+              <strong>Dark</strong>
             </button>
           </div>
         </section>

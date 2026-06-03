@@ -4,11 +4,15 @@
   --bg-elevated: #f0f0f0;
   --bg-sidebar: #ffffff;
   --border: #e0e0e0;
-  --accent: #c41e3a;
-  --accent-hover: #a01729;
-  --accent-soft: rgba(196, 30, 58, 0.12);
-  --focus-ring: rgba(196, 30, 58, 0.35);
-  --heading-color: #c41e3a;
+  --accent: #e60000;
+  --accent-hover: #cc0000;
+  --accent-soft: rgba(230, 0, 0, 0.12);
+  --focus-ring: rgba(230, 0, 0, 0.35);
+  --heading-color: #e60000;
+  --nav-active-bg: var(--accent-soft);
+  --input-bg: var(--bg-sidebar);
+  --input-border: var(--border);
+  --table-header-bg: transparent;
   --text-primary: #1a1a1a;
   --text-secondary: #666666;
   --text-muted: #999999;
@@ -28,11 +32,15 @@
     --bg-elevated: #f0f0f0;
     --bg-sidebar: #ffffff;
     --border: #e0e0e0;
-    --accent: #c41e3a;
-    --accent-hover: #a01729;
-    --accent-soft: rgba(196, 30, 58, 0.12);
-    --focus-ring: rgba(196, 30, 58, 0.35);
-    --heading-color: #c41e3a;
+    --accent: #e60000;
+    --accent-hover: #cc0000;
+    --accent-soft: rgba(230, 0, 0, 0.12);
+    --focus-ring: rgba(230, 0, 0, 0.35);
+    --heading-color: #e60000;
+    --nav-active-bg: var(--accent-soft);
+    --input-bg: var(--bg-sidebar);
+    --input-border: var(--border);
+    --table-header-bg: transparent;
     --text-primary: #1a1a1a;
     --text-secondary: #666666;
     --text-muted: #999999;
@@ -63,11 +71,15 @@ body.theme-default {
   --bg-elevated: #f0f0f0;
   --bg-sidebar: #ffffff;
   --border: #e0e0e0;
-  --accent: #c41e3a;
-  --accent-hover: #a01729;
-  --accent-soft: rgba(196, 30, 58, 0.12);
-  --focus-ring: rgba(196, 30, 58, 0.35);
-  --heading-color: #c41e3a;
+  --accent: #e60000;
+  --accent-hover: #cc0000;
+  --accent-soft: rgba(230, 0, 0, 0.12);
+  --focus-ring: rgba(230, 0, 0, 0.35);
+  --heading-color: #e60000;
+  --nav-active-bg: var(--accent-soft);
+  --input-bg: var(--bg-sidebar);
+  --input-border: var(--border);
+  --table-header-bg: transparent;
   --text-primary: #1a1a1a;
   --text-secondary: #666666;
   --text-muted: #999999;
@@ -78,19 +90,23 @@ body.theme-default {
 }
 
 body.theme-dark {
-  --bg-base: #100a1f;
-  --bg-surface: #171025;
-  --bg-elevated: #211633;
-  --bg-sidebar: #140d24;
-  --border: #31224a;
-  --accent: #a855f7;
-  --accent-hover: #8b5cf6;
-  --accent-soft: rgba(168, 85, 247, 0.16);
-  --focus-ring: rgba(168, 85, 247, 0.4);
-  --heading-color: #c084fc;
-  --text-primary: #fbf8ff;
-  --text-secondary: #d8cbed;
-  --text-muted: #a99abf;
+  --bg-base: #1a1727;
+  --bg-surface: #221f30;
+  --bg-elevated: #221f30;
+  --bg-sidebar: #12101a;
+  --border: #2e2b3e;
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-soft: rgba(139, 92, 246, 0.16);
+  --focus-ring: rgba(139, 92, 246, 0.4);
+  --heading-color: #8b5cf6;
+  --nav-active-bg: #2e2a42;
+  --input-bg: #1e1b2e;
+  --input-border: #3a3550;
+  --table-header-bg: #1e1b2e;
+  --text-primary: #f0eeff;
+  --text-secondary: #a89fc0;
+  --text-muted: #a89fc0;
   --success: #2ba640;
   --warning: #f59e0b;
   --danger: #ff4444;
@@ -165,6 +181,23 @@ button {
   box-shadow: 1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sidebar-logo {
+  display: block;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+}
+
 .nav {
   display: grid;
   gap: 8px;
@@ -186,7 +219,7 @@ button {
 .nav-item:hover,
 .nav-item.active {
   border-left-color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--nav-active-bg);
   color: var(--accent);
 }
 
@@ -214,9 +247,9 @@ button {
 
 .workspace-switcher select {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
-  background: var(--bg-base);
+  background: var(--input-bg);
   color: var(--text-primary);
   padding: 10px 12px;
 }
@@ -301,7 +334,8 @@ button {
 .stat-value {
   margin-top: 8px;
   font-size: 30px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .stat-note {
@@ -432,9 +466,9 @@ button {
 .field select,
 .field textarea {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
-  background: var(--bg-sidebar);
+  background: var(--input-bg);
   color: var(--text-primary);
   padding: 14px;
   transition: border-color 200ms ease;
@@ -532,6 +566,7 @@ button {
 }
 
 .table th {
+  background: var(--table-header-bg);
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
@@ -581,6 +616,11 @@ button {
 .badge-warning {
   background: rgba(245, 158, 11, 0.12);
   color: var(--warning);
+}
+
+body.theme-dark .badge-warning {
+  background: #3b1f1f;
+  color: #f87171;
 }
 
 .badge-danger {
@@ -789,6 +829,7 @@ button {
   }
 
   .sidebar .workspace-switcher,
+  .sidebar-brand,
   .sidebar-footer {
     display: none;
   }
@@ -888,6 +929,10 @@ button {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
+  .sidebar-brand {
+    display: none;
+  }
+
   .sidebar .workspace-switcher label,
   .sidebar .workspace-switcher span,
   .sidebar-footer {
@@ -898,7 +943,7 @@ button {
     min-height: 44px;
     overflow: hidden;
     border-color: transparent;
-    background: var(--bg-base);
+    background: var(--input-bg);
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 13px;
